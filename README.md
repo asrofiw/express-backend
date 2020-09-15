@@ -7,7 +7,7 @@ Express.js is a web application framework for Node.js. [More about Express](http
 
 ## Built With
 [![Express.js](https://img.shields.io/badge/Express.js-4.x-orange.svg?style=rounded-square)](https://expressjs.com/en/starter/installing.html)
-[![Node.js](https://img.shields.io/badge/Node.js-v.10.16-green.svg?style=rounded-square)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-v.12.18.3-green.svg?style=rounded-square)](https://nodejs.org/)
 
 ## Requirements
 1. <a href="https://nodejs.org/en/download/">Node Js</a>
@@ -31,20 +31,48 @@ Express.js is a web application framework for Node.js. [More about Express](http
 
 * `/items/:id` (Get all data from specific id)
 
+* `/category` (Get all data from category)
+
+* `/category/:id` (Get all data from specific id)
+
+* `/sub-category` (Get all data from sub-category)
+
+* `/sub-category/:id` (Get all data from specific id)
+
+* `/cart` (Get all data from cart)
+
 **2. POST**
 
-* `/items` (Post data to database)
+* `/items` (Create data item and post to database)
 
-**4. PUT**
+* `/category` (Create data category and post to database)
+
+* `/sub-category` (Create data sub-category and post to database)
+
+* `/cart` (Create data cart and post to database)
+
+**3. PUT**
 
 * `/items/:id` (Update all data by spesific id)
 
+* `/category/:id` (Update all data category by spesific id)
+
+* `/sub-category/:id` (Update all data sub-category by spesific id)
+
 **4. PATCH**
 
-* `/items/:id` (Update some data by spesific id)
+* `/items/:id` (Update some data item by spesific id)
+
+* `/cart/:id` (Update some data cart by spesific id)
 
 **5. DELETE**
 
 * `/items/:id` (Delete items by id)
+
+* `/category/:id` (Delete category by id)
+
+* `/sub-category/:id` (Delete sub-category by id)
+
+* `/cart/:id` (Delete cart by id)
 
   
