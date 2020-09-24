@@ -1,57 +1,57 @@
 const qs = require('querystring')
-
+const responseStandard = require('../helpers/response')
 const { createItemModel, getDetailItemModel, getDetailItemIDModel, updateItemModel, updatePartialItemModel, deleteItemModel, getItemModel, getItemCountModel } = require('../models/itemsModel')
 
 module.exports = {
   createItem: (req, res) => {
     const { name, price, description, categoryID, subCategoryID } = req.body
-    if (name && price && description && categoryID && subCategoryID) {
-      createItemModel([name, price, description, categoryID, subCategoryID], (err, result) => {
+    let { path } = req.file
+    path = path.split('\\')
+    path.shift()
+    path = path.join('/')
+
+    const urlImage = process.env.APP_URL.concat(path)
+
+    if (name && price && description && categoryID && subCategoryID && urlImage) {
+      createItemModel([name, price, description, categoryID, subCategoryID, urlImage], (err, result) => {
         if (!err) {
-          res.status(201).send({
-            succes: true,
-            message: 'Item has been created',
-            data: {
-              id: result.insertId,
-              ...req.body
-            }
-          })
+          const data = {
+            id: result.insertId,
+            ...req.body,
+            urlImage: urlImage
+          }
+
+          return responseStandard(res, 'Item has been created', 200, true, { data })
         } else {
-          res.send({
-            succes: false,
-            message: 'Database Error'
-          })
+          return responseStandard(res, 'Internal server error', 500, false)
         }
       })
     } else {
-      res.status(400).send({
-        succes: false,
-        message: 'All field must be filled'
-      })
+      return responseStandard(res, 'All field must be filled', 400, false)
     }
   },
   getDetailItem: (req, res) => {
     const { id } = req.params
     getDetailItemModel(id, (err, item) => {
       if (!err) {
+        const data = item.map(element => ({
+          id: element.id,
+          name: element.name,
+          description: element.description,
+          categoryID: element.categoryID,
+          category: element.category,
+          subCategoryID: element.subCategoryID,
+          sub_category: element.sub_category,
+          price: element.price
+        }))
+
         if (item.length) {
-          res.send({
-            succes: true,
-            message: `Item with id ${id}`,
-            data: item[0],
-            back: 'http://localhost:8080/items'
-          })
+          return responseStandard(res, `Detail item ${data.name}`, 200, true, { data })
         } else {
-          res.send({
-            succes: false,
-            message: 'Data not found!'
-          })
+          return responseStandard(res, `Data with id ${id} not found`, 400, false)
         }
       } else {
-        res.send({
-          succes: false,
-          message: 'Database Error'
-        })
+        return responseStandard(res, 'Internal Server Error', 500, false)
       }
     })
   },
@@ -60,39 +60,20 @@ module.exports = {
     const { name, price, description, categoryID, subCategoryID } = req.body
     if (name.trim() && price.trim() && description.trim() && categoryID.trim() && subCategoryID.trim()) {
       getDetailItemIDModel(id, (_err, items) => {
-        // if (Object.values(items).includes("'")) {
-        //   x[index].
-        //   return Object.values(items).replace()
-
-        //     })
-        //   console.log(data)
-        // }
         if (items.length) {
           updateItemModel([id, name, price, description, categoryID, subCategoryID], result => {
             if (result.affectedRows) {
-              res.send({
-                succes: true,
-                message: `Category with id ${id} has been updated`
-              })
+              return responseStandard(res, `Item with id ${id} has been updated`)
             } else {
-              res.send({
-                succes: false,
-                message: 'Failed update data'
-              })
+              return responseStandard(res, 'Failed to update data', 400, false)
             }
           })
         } else {
-          res.send({
-            succes: false,
-            message: `ID ${id} not found`
-          })
+          return responseStandard(res, `ID ${id} not found`, 400, false)
         }
       })
     } else {
-      res.send({
-        succes: false,
-        message: 'Error'
-      })
+      return responseStandard(res, 'All data have to be updated', 400, false)
     }
   },
   updatePartialItem: (req, res) => {
@@ -106,22 +87,13 @@ module.exports = {
           })
           updatePartialItemModel([id, data], (_err, result) => {
             if (result.affectedRows) {
-              res.send({
-                succes: true,
-                message: `item ${id} has been updated`
-              })
+              return responseStandard(res, `Item with id ${id} has been updated`)
             } else {
-              res.send({
-                succes: false,
-                message: 'Failed to update data'
-              })
+              return responseStandard(res, 'Failed to update data', 400, false)
             }
           })
         } else {
-          res.send({
-            succes: false,
-            message: 'At least one column is filled'
-          })
+          return responseStandard(res, 'At least one column is filled', 400, false)
         }
       })
     }
@@ -133,28 +105,16 @@ module.exports = {
         deleteItemModel(id, (err, result) => {
           if (!err) {
             if (result.affectedRows) {
-              res.send({
-                succes: true,
-                message: `Data ID ${id} has been deleted`
-              })
+              return responseStandard(res, `Data ID ${id} has been deleted`)
             } else {
-              res.send({
-                succes: false,
-                message: 'Failed to delete data'
-              })
+              return responseStandard(res, 'Failed to delete data', 400, false)
             }
           } else {
-            res.send({
-              succes: false,
-              message: 'Error'
-            })
+            return responseStandard(res, 'Internal server Error \'Delete Item Model\'', 500, false)
           }
         })
       } else {
-        res.send({
-          succes: false,
-          message: 'Data not found'
-        })
+        return responseStandard(res, 'Data not found', 400, false)
       }
     })
   },
@@ -203,6 +163,15 @@ module.exports = {
     }
     const offset = (page - 1) * limit
     getItemModel([searchKey, searchValue, sortKey, sortValue, limit, offset], result => {
+      const dataResult = result.map(element => ({
+        id: element.id,
+        name: element.name,
+        category: element.category,
+        sub_category: element.sub_category,
+        price: element.price,
+        url_image: element.url_image
+      }))
+
       const pageInfo = {
         count: 0,
         pages: 0,
@@ -226,19 +195,10 @@ module.exports = {
           if (currentPage > 1) {
             pageInfo.prevLink = `http://localhost:8080/items?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
           }
-          res.send({
-            succes: true,
-            message: 'List of items',
-            data: result,
-            pageInfo
-          })
+          return responseStandard(res, 'List of Items', 200, true, { dataResult, pageInfo })
         })
       } else {
-        res.send({
-          succes: false,
-          message: 'There is no items on list',
-          pageInfo
-        })
+        return responseStandard(res, 'There is no Items on list', 400, false, { pageInfo })
       }
     })
   }

@@ -1,4 +1,5 @@
 const qs = require('querystring')
+const responseStandard = require('../helpers/response')
 const { createSubCategoryModel, getAllSubCategoryModel, updateSubCategoryModel, deleteSubCategoryModel, getCountAllSubCategoryModel, getDetailSubCategoryIDModel, getDetailSubCategoryModel, getCountSubCategoryModel } = require('../models/subCategoryModel')
 
 module.exports = {
@@ -7,22 +8,12 @@ module.exports = {
     createSubCategoryModel([name, categoryID], (err, result) => {
       if (!err) {
         if (result.affectedRows) {
-          res.send({
-            succes: true,
-            message: 'Sub Category has been created',
-            data: req.body
-          })
+          return responseStandard(res, 'Sub Category has been created', 200, true, { data: req.body })
         } else {
-          res.send({
-            succes: false,
-            message: 'Failed to create Sub Category'
-          })
+          return responseStandard(res, 'Failed to create Sub Category', 400, false)
         }
       } else {
-        res.send({
-          succes: false,
-          message: 'Database error'
-        })
+        return responseStandard(res, 'Internal server error', 500, false)
       }
     })
   },
@@ -67,24 +58,13 @@ module.exports = {
             if (currentPage > 1) {
               pageInfo.prevLink = `http://localhost:8080/sub-category?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
             }
-            res.send({
-              succes: true,
-              message: 'List of Sub Category',
-              data: result,
-              pageInfo
-            })
+            return responseStandard(res, 'List of Sub Category', 200, true, { data: result, pageInfo })
           })
         } else {
-          res.send({
-            succes: false,
-            message: 'Sub Category not found'
-          })
+          return responseStandard(res, 'Sub Category not found', 400, false)
         }
       } else {
-        res.send({
-          succes: false,
-          message: 'Database Error'
-        })
+        return responseStandard(res, 'Internal server error', 500, false)
       }
     })
   },
@@ -95,22 +75,12 @@ module.exports = {
     updateSubCategoryModel([id, name], (err, result) => {
       if (!err) {
         if (result.affectedRows) {
-          res.send({
-            succes: true,
-            message: `Sub Category with id ${id} has been updated`,
-            value: req.body
-          })
+          return responseStandard(res, `Sub Category with id ${id} has been updated`)
         } else {
-          res.send({
-            succes: false,
-            message: 'Failed update Sub Category'
-          })
+          return responseStandard(res, 'Failed to update Sub Category', 400, false)
         }
       } else {
-        res.send({
-          succes: false,
-          message: 'Database update error'
-        })
+        return responseStandard(res, 'Internal server error', 500, false)
       }
     })
   },
@@ -121,21 +91,12 @@ module.exports = {
         deleteSubCategoryModel(id, (err, result) => {
           if (!err) {
             if (result.affectedRows) {
-              res.send({
-                succes: true,
-                message: `Sub Category with id ${id} has been deleted`
-              })
+              return responseStandard(res, `Sub Category with id ${id} has been deleted`)
             } else {
-              res.send({
-                succes: false,
-                message: 'Sub Category can not be deleted'
-              })
+              return responseStandard(res, 'Sub Category cannot be deleted', 400, false)
             }
           } else {
-            res.send({
-              succes: false,
-              message: 'Database error'
-            })
+            return responseStandard(res, 'Internal server error', 500, false)
           }
         })
       }
@@ -184,25 +145,13 @@ module.exports = {
             if (currentPage > 1) {
               pageInfo.prevLink = `http://localhost:8080/sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
             }
-            res.send({
-              succes: true,
-              message: `List of Sub Category ${name}`,
-              data: result,
-              pageInfo
-            })
+            return responseStandard(res, `List of Sub Category ${name}`, 200, true, { data: result, pageInfo })
           })
         } else {
-          res.send({
-            succes: false,
-            message: `There is no data on list of Sub Category with id ${id}`,
-            pageInfo
-          })
+          return responseStandard(res, `There is no data on list of Sub Category with id ${id}`, 400, false, { pageInfo })
         }
       } else {
-        res.send({
-          succes: false,
-          message: 'Database Error'
-        })
+        return responseStandard(res, 'Internal server error', 500, false)
       }
     })
   }

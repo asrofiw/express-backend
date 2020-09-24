@@ -1,5 +1,5 @@
 const { createCartModel, getPriceNameItemModel, updateAmountCartModel, getDetailIDCartModel, deleteCartModel, getSummaryCartModel, getCartModel } = require('../models/cartModel')
-
+const responseStandard = require('../helpers/response')
 module.exports = {
   createCart: (req, res) => {
     const { amount, idItem } = req.body
@@ -9,35 +9,23 @@ module.exports = {
         createCartModel([amount, price, idItem], (err, result) => {
           if (!err) {
             if (result.affectedRows) {
-              res.status(201).send({
-                succes: true,
-                message: 'Item has been added to Cart',
-                data: {
-                  id: result.insertId,
-                  ...req.body,
-                  item: name,
-                  total: (price * amount)
-                }
-              })
+              const data = {
+                id: result.insertId,
+                ...req.body,
+                item: name,
+                total: (price * amount)
+              }
+              return responseStandard(res, 'Item has been added to Cart', 200, true, { data })
             } else {
-              res.send({
-                succes: false,
-                message: 'Can not add to Cart'
-              })
+              return responseStandard(res, 'Cannot add Item to Cart', 400, false)
             }
           } else {
-            res.send({
-              succes: false,
-              message: 'Database Error'
-            })
+            return responseStandard(res, 'Internal server error', 500, false)
           }
         })
       })
     } else {
-      res.status(400).send({
-        succes: false,
-        message: 'All field must be filled'
-      })
+      return responseStandard(res, 'Cannot get Item', 400, false)
     }
   },
   updateAmountCart: (req, res) => {
@@ -55,36 +43,21 @@ module.exports = {
             updateAmountCartModel([cartID, amount, price], (err, result) => {
               if (!err) {
                 if (result.affectedRows) {
-                  res.send({
-                    succes: true,
-                    message: `Amount cart id ${id} has been updated`
-                  })
+                  return responseStandard(res, 'Amount added')
                 } else {
-                  res.send({
-                    succes: false,
-                    message: 'Failed to update'
-                  })
+                  return responseStandard(res, 'Failed to add', 400, false)
                 }
               } else {
-                res.send({
-                  succes: false,
-                  message: 'Database error'
-                })
+                return responseStandard(res, 'Internal server error', 500, false)
               }
             })
           })
         } else {
-          res.send({
-            succes: false,
-            message: 'Get detail Cart ID Failed'
-          })
+          return responseStandard(res, 'Internal server error', 500, false)
         }
       })
     } else {
-      res.send({
-        succes: false,
-        message: 'Error'
-      })
+      return responseStandard(res, 'Failed to get amount', 400, false)
     }
   },
   deleteCart: (req, res) => {
@@ -94,21 +67,12 @@ module.exports = {
         deleteCartModel(id, (err, result) => {
           if (!err) {
             if (result.affectedRows) {
-              res.send({
-                succes: true,
-                message: `Cart with id ${id} has been deleted`
-              })
+              return responseStandard(res, `Cart with id ${id} has been deleted`)
             } else {
-              res.send({
-                succes: false,
-                message: 'Cart can not be deleted'
-              })
+              return responseStandard(res, 'Cannot delete', 400, false)
             }
           } else {
-            res.send({
-              succes: false,
-              message: 'Database error'
-            })
+            return responseStandard(res, 'Internal server error', 500, false)
           }
         })
       }
@@ -120,23 +84,12 @@ module.exports = {
       getCartModel((err, result) => {
         if (!err) {
           if (result.length) {
-            res.send({
-              succes: true,
-              message: 'Summary price of items',
-              data: result,
-              summary: summary
-            })
+            return responseStandard(res, 'Summary price of Items', 200, true, { data: result, summary: summary })
           } else {
-            res.send({
-              succes: false,
-              message: 'Failed to summary price'
-            })
+            return responseStandard(res, 'Failed to get summary', 400, false)
           }
         } else {
-          res.send({
-            succes: false,
-            message: 'Get cart model error'
-          })
+          return responseStandard(res, 'Internal server error', 500, false)
         }
       })
     })
