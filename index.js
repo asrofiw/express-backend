@@ -6,6 +6,7 @@ const itemsRouter = require('./src/routes/itemsRoute')
 const categoryRouter = require('./src/routes/categoryRoute')
 const subCategoryRouter = require('./src/routes/subCategoryRoute')
 const cartRouter = require('./src/routes/cartRoute')
+const roleRouter = require('./src/routes/roleRoute')
 
 const app = express()
 
@@ -20,6 +21,7 @@ app.use('/items', itemsRouter)
 app.use('/category', categoryRouter)
 app.use('/sub-category', subCategoryRouter)
 app.use('/cart', cartRouter)
+app.use('/role', roleRouter)
 
 app.listen(8080, () => {
   console.log('Listening to the Port 8080')
