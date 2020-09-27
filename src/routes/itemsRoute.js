@@ -5,11 +5,11 @@ const router = Router()
 
 const uploadHelper = require('../helpers/upload')
 
-router.post('/items', uploadHelper.array('pictures'), createItem)
-router.get('/items/:id', getDetailItem)
-router.put('/items/:id', uploadHelper.array('pictures'), updateItem)
-router.patch('/items/:id', uploadHelper.array('pictures'), updatePartialItem)
-router.delete('/items/:id', deleteItem)
-router.get('/items', getItems)
+router.post('/', uploadHelper.array('pictures', 5), createItem)
+router.get('/:id', getDetailItem)
+router.put('/:id', uploadHelper.array('pictures', 5), updateItem)
+router.patch('/:id', uploadHelper.array('pictures', 5), updatePartialItem)
+router.delete('/:id', deleteItem)
+router.get('/', getItems)
 
 module.exports = router

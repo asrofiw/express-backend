@@ -8,36 +8,49 @@ const {
   updatePartialItemModel,
   deleteItemModel,
   getItemModel,
-  getItemCountModel
-  // createImageModel
+  getItemCountModel,
+  createImageModel,
+  getImagesModel
 } = require('../models/itemsModel')
 
 module.exports = {
   createItem: async (req, res) => {
     const { name, price, description, categoryID, subCategoryID } = req.body
-    // let { path } = req.file
-    // path = path.split('\\')
-    // path.shift()
-    // path = path.join('/')
-
-    // const urlImage = process.env.APP_URL.concat(path)
+    const imagesUpload = req.files
+    let path = imagesUpload.map(element => {
+      return element.path
+    })
+    path = path.map(element => {
+      return element.split('\\')
+    })
+    path.map(element => element.shift())
 
     if (name && price && description && categoryID && subCategoryID) {
       try {
         const result = await createItemModel([name, price, description, categoryID, subCategoryID])
-
-        // try {
-        //   const { id } = result.insertId
-        //   const image = await createImageModel([id, urlImage])
-        // } catch (err) {
-        //   return responseStandard(res, 'Internal server error', 500, false)
-        // }
-        const data = {
+        let data = {
           id: result.insertId,
           ...req.body
         }
 
-        return responseStandard(res, 'Item has been created', 200, true, { data })
+        try {
+          const { id } = data
+          const urlImage = path.map(element => {
+            return `(${id}, '${process.env.APP_URL.concat(element.join('/'))}'), `
+          })
+          const images = await createImageModel(urlImage.join('').slice(0, -2))
+          if (images.affectedRows) {
+            data = {
+              ...data,
+              image: urlImage
+            }
+            return responseStandard(res, 'Item has been created', 200, true, { data })
+          } else {
+            return responseStandard(res, 'Failed to upload image', 400, false)
+          }
+        } catch (err) {
+          return responseStandard(res, 'Internal server error', 500, false)
+        }
       } catch (err) {
         return responseStandard(res, 'Internal server error', 500, false)
       }
@@ -49,7 +62,8 @@ module.exports = {
     const { id } = req.params
     try {
       const item = await getDetailItemModel(id)
-      const data = item.map(element => ({
+
+      let data = item.map(element => ({
         id: element.id,
         name: element.name,
         description: element.description,
@@ -59,11 +73,28 @@ module.exports = {
       }))
 
       if (item.length) {
-        return responseStandard(res, `Detail item ${data[0].name}`, 200, true, { data })
+        try {
+          const getImages = await getImagesModel(id)
+          if (getImages.length) {
+            const url = getImages.map(e => e.url)
+            data = {
+              ...data[0],
+              url: url
+            }
+
+            return responseStandard(res, `Detail item ${data.name}`, 200, true, { data })
+          } else {
+            return responseStandard(res, 'Failed to get Images', 404, false)
+          }
+        } catch (err) {
+          console.log(err)
+          return responseStandard(res, 'Internal server error', 500, false)
+        }
       } else {
         return responseStandard(res, `Data with id ${id} not found`, 404, false)
       }
     } catch (err) {
+      console.log(err)
       return responseStandard(res, 'Internal Server Error', 500, false)
     }
   },

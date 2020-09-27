@@ -25,7 +25,7 @@ app.use(cors())
 app.use('/uploads', express.static('assets/uploads'))
 
 app.use(bodyParser.urlencoded({ extended: false }))
-app.use('/private', authMiddleware, itemsRouter)
+app.use('/items', authMiddleware, itemsRouter)
 app.use('/category', authMiddleware, categoryRouter)
 app.use('/sub-category', authMiddleware, subCategoryRouter)
 app.use('/cart', authMiddleware, cartRouter)

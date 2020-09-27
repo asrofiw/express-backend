@@ -9,19 +9,23 @@ module.exports = {
       VALUES ('${arr[0]}', ${arr[1]}, '${arr[2]}', ${arr[3]}, ${arr[4]})`
     return model(query)
   },
-  createImageModel: (arr = []) => {
+  createImageModel: (data) => {
     const query = `INSERT INTO items_image (items_id, url)
-      VALUES (${arr[0]}, '${arr[2]}')`
-    return model(query)
+      VALUES ${data}`
+    return model(query, data)
   },
   getDetailItemModel: (id) => {
-    const query = `SELECT id, ${table}.name, price, ${table}.description,
+    const query = `SELECT items.id, ${table}.name, price, ${table}.description,
       ${table}.category_id AS categoryID, ${table}.sub_category_id AS subCategoryID,
       ${tableCategories}.name AS category, ${tableSubCategory}.sub_category_name AS sub_category
       FROM ${table}
       INNER JOIN ${tableCategories} ON ${tableCategories}.category_id = ${table}.category_id
       INNER JOIN ${tableSubCategory} ON ${tableSubCategory}.sub_category_id = ${table}.sub_category_id
-      WHERE id = ${id}`
+      WHERE items.id = ${id}`
+    return model(query)
+  },
+  getImagesModel: (id) => {
+    const query = `SELECT url from items_image WHERE items_id = ${id}`
     return model(query)
   },
   getDetailItemIDModel: (id) => {

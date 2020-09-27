@@ -8,13 +8,20 @@ module.exports = {
     return model(query)
   },
   createCartModel: (arr) => {
-    const query = `INSERT INTO ${table} (amount, cart_total, id)
-    VALUES (${arr[0]}, (${arr[0]}*${arr[1]}), ${arr[2]})`
+    const query = `INSERT INTO ${table} (amount, id)
+    VALUES (${arr[0]}, ${arr[1]})`
+    return model(query)
+  },
+  createCartTotalModel: (arr) => {
+    const query = `INSERT INTO cart_total (cart_total, cart_id) VALUES ('${arr[0]}', ${arr[1]})`
     return model(query)
   },
   updateAmountCartModel: (arr) => {
-    const query = `UPDATE ${table} SET amount = ${arr[1]}, cart_total = (${arr[1]}*${arr[2]})
-    WHERE cart_id = ${arr[0]}`
+    const query = `UPDATE ${table} SET amount = ${arr[1]} WHERE cart_id = ${arr[0]}`
+    return model(query)
+  },
+  updateTotalModel: (arr) => {
+    const query = `UPDATE cart_total SET cart_total = ${arr[0]} WHERE cart_id = ${arr[1]}`
     return model(query)
   },
   getDetailIDCartModel: (id) => {
@@ -26,13 +33,15 @@ module.exports = {
     return model(query)
   },
   getCartModel: () => {
-    const query = `SELECT cart_id AS id, ${tableItems}.name AS item, ${tableItems}.price AS price, amount, cart_total AS total
-    FROM ${table}
-    INNER JOIN ${tableItems} ON ${table}.id = ${tableItems}.id`
+    const query = `SELECT cart.cart_id AS id, items.name AS item, items.price AS price, cart.amount AS amount, cart_total.cart_total AS total
+    FROM cart 
+    INNER JOIN cart_total ON cart_total.cart_id = cart.cart_id
+    INNER JOIN items ON items.id = cart.id`
+    console.log(query)
     return model(query)
   },
   getSummaryCartModel: () => {
-    const query = `SELECT SUM(cart_total) AS summary FROM ${table}`
+    const query = 'SELECT SUM(cart_total) AS summary FROM cart_total'
     return model(query)
   }
 }
