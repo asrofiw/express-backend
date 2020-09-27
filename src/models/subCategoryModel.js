@@ -1,58 +1,47 @@
-const db = require('../helpers/db')
+const model = require('../helpers/model')
 const table = 'sub_category'
 const tableJoin = 'categories'
 const tableDetailJoin = 'items'
 
 module.exports = {
-  createSubCategoryModel: (arr, cb) => {
+  createSubCategoryModel: (arr) => {
     const query = `INSERT INTO ${table} (sub_category_name, category_id) VALUES ('${arr[0]}', ${arr[1]})`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  getAllSubCategoryModel: (arr, cb) => {
-    const query = `SELECT ${table}.sub_category_id, ${table}.sub_category_name, ${tableJoin}.category_name FROM ${table} INNER JOIN ${tableJoin} ON ${table}.category_id = ${tableJoin}.category_id LIMIT ${arr[0]} OFFSET ${arr[1]}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+  getAllSubCategoryModel: (arr) => {
+    const query = `SELECT ${table}.sub_category_id, ${table}.sub_category_name, ${tableJoin}.name
+    FROM ${table}
+    INNER JOIN ${tableJoin} ON ${table}.category_id = ${tableJoin}.category_id LIMIT ${arr[0]} OFFSET ${arr[1]}`
+    return model(query)
   },
-  updateSubCategoryModel: (arr, cb) => {
+  updateSubCategoryModel: (arr) => {
     const query = `UPDATE ${table} SET sub_category_name = '${arr[1]}' WHERE sub_category_id = ${arr[0]}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  deleteSubCategoryModel: (id, cb) => {
+  deleteSubCategoryModel: (id) => {
     const query = `DELETE FROM ${table} WHERE sub_category_id = ${id}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  getCountAllSubCategoryModel: (_arr, cb) => {
+  getCountAllSubCategoryModel: () => {
     const query = `SELECT COUNT(*) AS count FROM ${table}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  getDetailSubCategoryIDModel: (id, cb) => {
+  getDetailSubCategoryIDModel: (id) => {
     const query = `SELECT * FROM ${table} where sub_category_id = ${id}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  getDetailSubCategoryModel: (arr, cb) => {
+  getDetailSubCategoryModel: (arr) => {
     const query = `SELECT ${table}.sub_category_id, ${table}.sub_category_name, ${tableDetailJoin}.name 
-    FROM ${table} 
-    INNER JOIN ${tableDetailJoin} ON ${table}.sub_category_id = ${tableDetailJoin}.sub_category_id 
-    WHERE ${table}.sub_category_id = ${arr[0]} LIMIT ${arr[1]} OFFSET ${arr[2]}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+      FROM ${table} 
+      INNER JOIN ${tableDetailJoin} ON ${table}.sub_category_id = ${tableDetailJoin}.sub_category_id 
+      WHERE ${table}.sub_category_id = ${arr[0]} LIMIT ${arr[1]} OFFSET ${arr[2]}`
+    return model(query)
   },
-  getCountSubCategoryModel: (arr, cb) => {
-    const query = `SELECT COUNT(*) AS count FROM ${table} INNER JOIN ${tableDetailJoin} ON ${table}.sub_category_id = ${tableDetailJoin}.sub_category_id WHERE ${table}.sub_category_id GROUP BY ${table}.sub_category_name = '${arr[1]}'`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+  getCountSubCategoryModel: (arr) => {
+    const query = `SELECT COUNT(*) AS count
+    FROM ${table}
+    INNER JOIN ${tableDetailJoin} ON ${table}.sub_category_id = ${tableDetailJoin}.sub_category_id
+    WHERE ${table}.sub_category_id GROUP BY ${table}.sub_category_name = '${arr[1]}'`
+    return model(query)
   }
 }

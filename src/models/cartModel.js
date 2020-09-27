@@ -1,52 +1,38 @@
-const db = require('../helpers/db')
+const model = require('../helpers/model')
 const table = 'cart'
 const tableItems = 'items'
 
 module.exports = {
-  getPriceNameItemModel: (id, cb) => {
+  getPriceNameItemModel: (id) => {
     const query = `SELECT name, price FROM ${tableItems} WHERE id = ${id}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  createCartModel: (arr, cb) => {
+  createCartModel: (arr) => {
     const query = `INSERT INTO ${table} (amount, cart_total, id)
     VALUES (${arr[0]}, (${arr[0]}*${arr[1]}), ${arr[2]})`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  updateAmountCartModel: (arr, cb) => {
+  updateAmountCartModel: (arr) => {
     const query = `UPDATE ${table} SET amount = ${arr[1]}, cart_total = (${arr[1]}*${arr[2]})
     WHERE cart_id = ${arr[0]}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  getDetailIDCartModel: (id, cb) => {
+  getDetailIDCartModel: (id) => {
     const query = `SELECT * FROM ${table} WHERE cart_id = ${id}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  deleteCartModel: (id, cb) => {
+  deleteCartModel: (id) => {
     const query = `DELETE FROM ${table} WHERE cart_id = ${id}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  getCartModel: (cb) => {
+  getCartModel: () => {
     const query = `SELECT cart_id AS id, ${tableItems}.name AS item, ${tableItems}.price AS price, amount, cart_total AS total
     FROM ${table}
     INNER JOIN ${tableItems} ON ${table}.id = ${tableItems}.id`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   },
-  getSummaryCartModel: (cb) => {
+  getSummaryCartModel: () => {
     const query = `SELECT SUM(cart_total) AS summary FROM ${table}`
-    db.query(query, (err, result, _field) => {
-      cb(err, result)
-    })
+    return model(query)
   }
 }

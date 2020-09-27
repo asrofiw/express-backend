@@ -1,24 +1,40 @@
 const qs = require('querystring')
 const responseStandard = require('../helpers/response')
-const { createItemModel, getDetailItemModel, getDetailItemIDModel, updateItemModel, updatePartialItemModel, deleteItemModel, getItemModel, getItemCountModel } = require('../models/itemsModel')
+const {
+  createItemModel,
+  getDetailItemModel,
+  getDetailItemIDModel,
+  updateItemModel,
+  updatePartialItemModel,
+  deleteItemModel,
+  getItemModel,
+  getItemCountModel
+  // createImageModel
+} = require('../models/itemsModel')
 
 module.exports = {
   createItem: async (req, res) => {
     const { name, price, description, categoryID, subCategoryID } = req.body
-    let { path } = req.file
-    path = path.split('\\')
-    path.shift()
-    path = path.join('/')
+    // let { path } = req.file
+    // path = path.split('\\')
+    // path.shift()
+    // path = path.join('/')
 
-    const urlImage = process.env.APP_URL.concat(path)
+    // const urlImage = process.env.APP_URL.concat(path)
 
-    if (name && price && description && categoryID && subCategoryID && urlImage) {
+    if (name && price && description && categoryID && subCategoryID) {
       try {
-        const result = await createItemModel([name, price, description, categoryID, subCategoryID, urlImage])
+        const result = await createItemModel([name, price, description, categoryID, subCategoryID])
+
+        // try {
+        //   const { id } = result.insertId
+        //   const image = await createImageModel([id, urlImage])
+        // } catch (err) {
+        //   return responseStandard(res, 'Internal server error', 500, false)
+        // }
         const data = {
           id: result.insertId,
-          ...req.body,
-          urlImage: urlImage
+          ...req.body
         }
 
         return responseStandard(res, 'Item has been created', 200, true, { data })
@@ -37,16 +53,13 @@ module.exports = {
         id: element.id,
         name: element.name,
         description: element.description,
-        categoryID: element.categoryID,
         category: element.category,
-        subCategoryID: element.subCategoryID,
         sub_category: element.sub_category,
-        price: element.price,
-        url_image: element.url_image
+        price: element.price
       }))
 
       if (item.length) {
-        return responseStandard(res, `Detail item ${data.name}`, 200, true, { data })
+        return responseStandard(res, `Detail item ${data[0].name}`, 200, true, { data })
       } else {
         return responseStandard(res, `Data with id ${id} not found`, 404, false)
       }
@@ -209,11 +222,11 @@ module.exports = {
           const { pages, currentPage } = pageInfo
 
           if (currentPage < pages) {
-            pageInfo.nextLink = `http://localhost:8080/items?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
+            pageInfo.nextLink = `http://localhost:8080/public/items?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
           }
 
           if (currentPage > 1) {
-            pageInfo.prevLink = `http://localhost:8080/items?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
+            pageInfo.prevLink = `http://localhost:8080/public/items?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
           }
 
           return responseStandard(res, 'List of Items', 200, true, { dataResult, pageInfo })
