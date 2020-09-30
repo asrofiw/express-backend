@@ -1,5 +1,16 @@
 const response = require('../helpers/response')
-const { createUserModel, getUserByConditionModel, getUserModel, createUserDetailModel, getUserDetailModel, updateUserAccessModel, updateUserDetailModel, deleteUserModel } = require('../models/userModel')
+const {
+  createUserModel,
+  getUserByConditionModel,
+  getUserModel,
+  createUserDetailModel,
+  getUserDetailModel,
+  updateUserAccessModel,
+  updateUserDetailModel,
+  deleteUserModel,
+  createUserAddressModel,
+  updateUserAddressModel
+} = require('../models/userModel')
 const joi = require('joi')
 const bcrypt = require('bcryptjs')
 
@@ -15,13 +26,16 @@ module.exports = {
       email: joi.string().required(),
       password: joi.string().required()
     })
-
-    let { path } = req.file
-    path = path.split('\\')
-    path.shift()
-    path = path.join('/')
-
-    const urlImage = process.env.APP_URL.concat(path)
+    let urlImage = process.env.APP_URL
+    if (req.file) {
+      let { path } = req.file
+      path = path.split('\\')
+      path.shift()
+      path = path.join('/')
+      urlImage = urlImage.concat(path)
+    } else {
+      urlImage = ''
+    }
     let { value: results, error } = schema.validate(req.body)
 
     if (error) {
@@ -33,8 +47,8 @@ module.exports = {
         return response(res, 'Email already used', 401, false)
       } else {
         try {
-          const { name, phone, gender, address, dateOfBirth, roleId } = results
-          const userDetail = await createUserDetailModel([name, phone, gender, address, dateOfBirth, roleId, urlImage])
+          const { name, phone, gender, dateOfBirth, roleId } = results
+          const userDetail = await createUserDetailModel([name, phone, gender, dateOfBirth, roleId, urlImage])
           if (userDetail.affectedRows) {
             const id = userDetail.insertId
             const salt = await bcrypt.genSalt(10)
@@ -54,7 +68,7 @@ module.exports = {
                 }
                 return response(res, 'Create user successfully', 200, true, { results })
               } else {
-                return response(res, 'Failed to create user', 401, false)
+                return response(res, 'Failed to create user access', 401, false)
               }
             } catch (err) {
               console.log(err)
@@ -166,24 +180,57 @@ module.exports = {
     const { id } = req.params
     const schema = joi.object({
       name: joi.string(),
-      phone_number: joi.string(),
-      address: joi.string()
+      email: joi.string(),
+      phone: joi.string(),
+      gender: joi.string(),
+      dateOfBirth: joi.string()
     })
-    const { value: results, error } = schema.validate(req.body)
+    let { value: results, error } = schema.validate(req.body)
+
+    let urlImage = process.env.APP_URL
+    if (req.file) {
+      let { path } = req.file
+      path = path.split('\\')
+      path.shift()
+      path = path.join('/')
+      urlImage = urlImage.concat(path)
+      results = {
+        ...results,
+        image: urlImage
+      }
+    } else {
+      urlImage = ''
+    }
+
     if (error) {
       return response(res, 'Error', 401, false, { error: error.message })
     } else {
+      const { email } = results
+      if (email) {
+        const isExists = await getUserByConditionModel({ email })
+        if (isExists.length > 0) {
+          return response(res, 'Email already used', 401, false)
+        } else {
+          try {
+            const updateAccess = await updateUserAccessModel(id, { email })
+            if (!updateAccess.affectedRows) {
+              return response(res, 'Failed to update image', 404, false)
+            }
+          } catch (err) {
+            return response(res, 'Internal server error \'update userAccess\'', 500, false)
+          }
+        }
+      }
+      delete results.email
       try {
-        console.log(results)
         const data = await updateUserDetailModel(id, results)
         if (data.affectedRows) {
-          return response(res, 'Data user has been change')
+          return response(res, 'Data has been update')
         } else {
           return response(res, `User with id ${id} not found`, 404, false)
         }
       } catch (err) {
-        console.log(err)
-        return response(res, 'Internal server error', 500, false)
+        return response(res, 'Internal server error \'update userDetail\'', 500, false)
       }
     }
   },
@@ -198,6 +245,59 @@ module.exports = {
       }
     } catch (err) {
       return response(res, 'Internal server error', 500, false)
+    }
+  },
+  createUserAddress: async (req, res) => {
+    const schema = joi.object({
+      address_as: joi.string().required(),
+      recipients_name: joi.string().required(),
+      recipients_phone: joi.string().required(),
+      address: joi.string().required(),
+      city: joi.string().required(),
+      postal_code: joi.string().required(),
+      user_id: joi.string().required()
+    })
+
+    const { value: results, error } = schema.validate(req.body)
+    if (error) {
+      return response(res, 'Error', 401, false, { error: error.message })
+    } else {
+      try {
+        const userAddress = await createUserAddressModel(results)
+        if (userAddress.affectedRows) {
+          return response(res, 'Add shipping address successfuly', 200, true, { results })
+        } else {
+          return response(res, 'Failed to add user\'s shipping address', 400, false)
+        }
+      } catch (err) {
+        return response(res, 'Internal server error \'create user address\'')
+      }
+    }
+  },
+  updateUserAddress: async (req, res) => {
+    const { id } = req.params
+    const schema = joi.object({
+      address_as: joi.string(),
+      recipients_name: joi.string(),
+      recipients_phone: joi.string(),
+      address: joi.string(),
+      city: joi.string(),
+      postal_code: joi.string()
+    })
+    const { value: results, error } = schema.validate(req.body)
+    if (error) {
+      return response(res, 'Error', 401, false, { error: error.message })
+    } else {
+      try {
+        const data = await updateUserAddressModel(id, results)
+        if (data.affectedRows) {
+          return response(res, 'Update data user\'s shipping address success')
+        } else {
+          return response(res, 'Failed to update user\'s shipping address', 400, false)
+        }
+      } catch (err) {
+        return response(res, 'Internal server error \'update user address\'')
+      }
     }
   }
 }

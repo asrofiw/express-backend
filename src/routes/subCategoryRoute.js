@@ -1,9 +1,10 @@
 const { Router } = require('express')
 const { createSubCategory, getAllSubCategory, updateSubCategory, deleteSubCategory, getDetailSubCategory } = require('../controllers/subCategoryController')
+const upload = require('../helpers/upload')
 
 const router = Router()
 
-router.post('/', createSubCategory)
+router.post('/', upload.single('picture'), createSubCategory)
 router.get('/', getAllSubCategory)
 router.put('/:id', updateSubCategory)
 router.delete('/:id', deleteSubCategory)

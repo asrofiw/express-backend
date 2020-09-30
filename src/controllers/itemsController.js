@@ -62,17 +62,15 @@ module.exports = {
     const { id } = req.params
     try {
       const item = await getDetailItemModel(id)
-
-      let data = item.map(element => ({
-        id: element.id,
-        name: element.name,
-        description: element.description,
-        category: element.category,
-        sub_category: element.sub_category,
-        price: element.price
-      }))
-
       if (item.length) {
+        let data = item.map(element => ({
+          id: element.id,
+          name: element.name,
+          description: element.description,
+          category: element.category,
+          sub_category: element.sub_category,
+          price: element.price
+        }))
         try {
           const getImages = await getImagesModel(id)
           if (getImages.length) {
@@ -84,7 +82,7 @@ module.exports = {
 
             return responseStandard(res, `Detail item ${data.name}`, 200, true, { data })
           } else {
-            return responseStandard(res, 'Failed to get Images', 404, false)
+            return responseStandard(res, `Images with item id ${id} not found`, 404, false)
           }
         } catch (err) {
           console.log(err)
