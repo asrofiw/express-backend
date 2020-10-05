@@ -1,26 +1,42 @@
 const { Router } = require('express')
 const {
-  createUser,
   getUser,
-  getDetailUser,
   updateUserAccess,
   updateUserDetail,
   deleteUser,
-  createUserAddress,
-  updateUserAddress
+  createCustomerAddress,
+  updateCustomerAddress,
+  getCustomerAddress,
+  updateUserSeller,
+  getCustomerDetail,
+  getSellerDetail,
+  createUserBalance,
+  topUpBalance,
+  getBalance
 } = require('../controllers/userController')
 
 const router = Router()
 const uploadHelper = require('../helpers/upload')
 const authMiddleware = require('../middlewares/auth')
 
-router.post('/register', uploadHelper.single('picture'), createUser)
+// Customer profile
+router.get('/customer/profile', authMiddleware, getCustomerDetail)
+router.patch('/customer/profile', authMiddleware, uploadHelper.single('picture'), updateUserDetail)
+// Customer Shipping-Address
+router.get('/customer/shipping-address', authMiddleware, getCustomerAddress)
+router.post('/customer/shipping-address', authMiddleware, createCustomerAddress)
+router.patch('/customer/shipping-address/:id', authMiddleware, updateCustomerAddress)
+// Customer Balance
+router.post('/customer/balance', authMiddleware, createUserBalance)
+router.patch('/customer/balance', authMiddleware, topUpBalance)
+router.get('/customer/balance', authMiddleware, getBalance)
+
+// Seller profile
+router.get('/seller/profile', authMiddleware, getSellerDetail)
+router.patch('/seller/profile', authMiddleware, uploadHelper.single('picture'), updateUserSeller)
+
 router.get('/', authMiddleware, getUser)
-router.get('/:id', authMiddleware, getDetailUser)
 router.patch('/:id', authMiddleware, updateUserAccess)
-router.patch('/detail/:id', authMiddleware, uploadHelper.single('picture'), updateUserDetail)
 router.delete('/detail/:id', authMiddleware, deleteUser)
-router.post('/shipping-address', authMiddleware, createUserAddress)
-router.patch('/shipping-address/:id', authMiddleware, updateUserAddress)
 
 module.exports = router

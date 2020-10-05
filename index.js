@@ -12,6 +12,8 @@ const roleRouter = require('./src/routes/roleRoute')
 const userRouter = require('./src/routes/userRoute')
 const authRouter = require('./src/routes/authRoute')
 const publicRouter = require('./src/routes/publicRoute')
+const checkoutRoute = require('./src/routes/checkoutRoute')
+const transactionRouter = require('./src/routes/transactionRoute')
 
 const app = express()
 
@@ -25,16 +27,21 @@ app.use(cors())
 app.use('/uploads', express.static('assets/uploads'))
 
 app.use(bodyParser.urlencoded({ extended: false }))
-app.use('/items', authMiddleware, itemsRouter)
-app.use('/category', authMiddleware, categoryRouter)
-app.use('/sub-category', authMiddleware, subCategoryRouter)
-app.use('/cart', authMiddleware, cartRouter)
-app.use('/role', authMiddleware, roleRouter)
-app.use('/user', userRouter)
-app.use('/auth', authRouter)
+
+// Private Routes
+app.use('/private', authMiddleware, itemsRouter)
+app.use('/private', authMiddleware, categoryRouter)
+app.use('/private', authMiddleware, subCategoryRouter)
+app.use('/private', authMiddleware, cartRouter)
+app.use('/private', authMiddleware, checkoutRoute)
+app.use('/private', authMiddleware, transactionRouter)
+app.use('/private', userRouter)
 
 // Public Routes
 app.use('/public', publicRouter)
+
+app.use('/role', authMiddleware, roleRouter)
+app.use('/auth', authRouter)
 
 app.listen(8080, () => {
   console.log('Listening to the Port 8080')

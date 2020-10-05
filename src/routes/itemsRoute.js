@@ -5,11 +5,14 @@ const router = Router()
 
 const uploadHelper = require('../helpers/upload')
 
-router.post('/', uploadHelper.array('pictures', 5), createItem)
-router.get('/:id', getDetailItem)
-router.put('/:id', uploadHelper.array('pictures', 5), updateItem)
-router.patch('/:id', uploadHelper.array('pictures', 5), updatePartialItem)
-router.delete('/:id', deleteItem)
-router.get('/', getItems)
+// Manage items by User Seller
+router.put('/user/seller/items/:id', uploadHelper.array('pictures', 5), updateItem)
+router.patch('/user/seller/items/:id', uploadHelper.array('pictures', 5), updatePartialItem)
+router.delete('user/seller/items/:id', deleteItem)
+router.post('/user/seller/items', uploadHelper.array('pictures', 5), createItem)
+
+// get Items by all user
+router.get('/items/:id', getDetailItem)
+router.get('/items', getItems)
 
 module.exports = router

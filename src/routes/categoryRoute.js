@@ -3,10 +3,13 @@ const { createCategory, updateCategory, getAllCategory, deleteCategory, getDetai
 
 const router = Router()
 
-router.post('/', createCategory)
-router.get('/', getAllCategory)
-router.put('/:id', updateCategory)
-router.delete('/:id', deleteCategory)
-router.get('/:id', getDetailCategory)
+// manage by admin
+router.post('/category', createCategory)
+router.put('/category/:id', updateCategory)
+router.delete('/category/:id', deleteCategory)
+
+// get by all customer
+router.get('/user/category/:id', getDetailCategory)
+router.get('/user/category', getAllCategory)
 
 module.exports = router

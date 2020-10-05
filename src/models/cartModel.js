@@ -1,5 +1,5 @@
 const model = require('../helpers/model')
-const table = 'cart'
+const table = 'my_cart'
 const tableItems = 'items'
 
 module.exports = {
@@ -8,40 +8,42 @@ module.exports = {
     return model(query)
   },
   createCartModel: (arr) => {
-    const query = `INSERT INTO ${table} (amount, id)
-    VALUES (${arr[0]}, ${arr[1]})`
+    const query = `INSERT INTO ${table} (quantity, item_id, user_id)
+    VALUES (${arr[0]}, ${arr[1]}, ${arr[2]})`
     return model(query)
   },
   createCartTotalModel: (arr) => {
-    const query = `INSERT INTO cart_total (cart_total, cart_id) VALUES ('${arr[0]}', ${arr[1]})`
+    const query = `INSERT INTO my_cart_total (total, my_cart_id) VALUES ('${arr[0]}', ${arr[1]})`
     return model(query)
   },
-  updateAmountCartModel: (arr) => {
-    const query = `UPDATE ${table} SET amount = ${arr[1]} WHERE cart_id = ${arr[0]}`
+  updateQuantityCartModel: (arr) => {
+    const query = `UPDATE ${table} SET quantity = ${arr[1]} WHERE id = ${arr[0]}`
     return model(query)
   },
   updateTotalModel: (arr) => {
-    const query = `UPDATE cart_total SET cart_total = ${arr[0]} WHERE cart_id = ${arr[1]}`
+    const query = `UPDATE my_cart_total SET total = ${arr[0]} WHERE my_cart_id = ${arr[1]}`
     return model(query)
   },
   getDetailIDCartModel: (id) => {
-    const query = `SELECT * FROM ${table} WHERE cart_id = ${id}`
+    const query = `SELECT * FROM ${table} WHERE id = ${id}`
     return model(query)
   },
   deleteCartModel: (id) => {
-    const query = `DELETE FROM ${table} WHERE cart_id = ${id}`
+    const query = `DELETE FROM ${table} WHERE id = ${id}`
     return model(query)
   },
-  getCartModel: () => {
-    const query = `SELECT cart.cart_id AS id, items.name AS item, items.price AS price, cart.amount AS amount, cart_total.cart_total AS total
-    FROM cart 
-    INNER JOIN cart_total ON cart_total.cart_id = cart.cart_id
-    INNER JOIN items ON items.id = cart.id`
-    console.log(query)
+  getCartModel: (id) => {
+    const query = `SELECT *
+    FROM my_cart 
+    INNER JOIN my_cart_total ON my_cart_total.my_cart_id = my_cart.id
+    INNER JOIN items ON items.id = my_cart.item_id
+    WHERE my_cart.user_id = ${id}`
     return model(query)
   },
-  getSummaryCartModel: () => {
-    const query = 'SELECT SUM(cart_total) AS summary FROM cart_total'
+  getSummaryCartModel: (id) => {
+    const query = `SELECT SUM(my_cart_total.total) AS summary FROM my_cart_total
+    INNER JOIN my_cart ON my_cart.id = my_cart_total.my_cart_id
+    WHERE my_cart.user_id = ${id}`
     return model(query)
   }
 }

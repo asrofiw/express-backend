@@ -1,7 +1,7 @@
 const {
   createCartModel,
   getPriceNameItemModel,
-  updateAmountCartModel,
+  updateQuantityCartModel,
   getDetailIDCartModel,
   deleteCartModel,
   getSummaryCartModel,
@@ -10,75 +10,40 @@ const {
   updateTotalModel
 } = require('../models/cartModel')
 const responseStandard = require('../helpers/response')
+// const { getImagesModel } = require('../models/itemsModel')
 
 module.exports = {
   createCart: async (req, res) => {
-    const { amount, idItem } = req.body
-    if (amount && idItem) {
-      try {
-        const data = await getPriceNameItemModel(idItem)
-        const { name, price } = data[0]
+    const { id } = req.user
+    const roleId = req.user.role_id
+    if (roleId === 3) {
+      const { quantity, idItem } = req.body
+      if (quantity && idItem) {
         try {
-          const result = await createCartModel([amount, idItem])
-          if (result.affectedRows) {
-            const data = {
-              id: result.insertId,
-              ...req.body,
-              item: name,
-              total: (price * amount)
-            }
-            try {
-              const { id, total } = data
-              const setTotal = await createCartTotalModel([total, id])
-              if (setTotal.affectedRows) {
-                return responseStandard(res, 'Item has been added to Cart', 200, true, { data })
-              } else {
-                return responseStandard(res, 'Failed to set Total', 400, false)
-              }
-            } catch (err) {
-              return responseStandard(res, 'Internal server error', 500, false)
-            }
-          } else {
-            return responseStandard(res, 'Cannot add Item to Cart', 400, false)
-          }
-        } catch (err) {
-          return responseStandard(res, 'Internal server error', 500, false)
-        }
-      } catch (err) {
-        return responseStandard(res, 'Internal server error', 500, false)
-      }
-    } else {
-      return responseStandard(res, 'Cannot get Item', 400, false)
-    }
-  },
-  updateAmountCart: async (req, res) => {
-    const { id } = req.params
-    let { amount } = req.body
-    amount = parseInt(amount)
-    if (amount > 0) {
-      try {
-        const data = await getDetailIDCartModel(id)
-        const cartID = data[0].cart_id
-        const itemID = data[0].id
-        try {
-          const resultPrice = await getPriceNameItemModel(itemID)
-          const { price } = resultPrice[0]
+          const data = await getPriceNameItemModel(idItem)
+          const { name, price } = data[0]
           try {
-            const result = await updateAmountCartModel([cartID, amount])
+            const result = await createCartModel([quantity, idItem, id])
             if (result.affectedRows) {
+              const data = {
+                id: result.insertId,
+                ...req.body,
+                item: name,
+                total: (price * quantity)
+              }
               try {
-                const total = price * amount
-                const updateTotal = await updateTotalModel([total, cartID])
-                if (updateTotal.affectedRows) {
-                  return responseStandard(res, 'Amount updated')
+                const { id, total } = data
+                const setTotal = await createCartTotalModel([total, id])
+                if (setTotal.affectedRows) {
+                  return responseStandard(res, 'Item has been added to Cart', 200, true, { data })
                 } else {
-                  return responseStandard(res, 'Failed to update total', 400, false)
+                  return responseStandard(res, 'Failed to set Total', 400, false)
                 }
               } catch (err) {
                 return responseStandard(res, 'Internal server error', 500, false)
               }
             } else {
-              return responseStandard(res, 'Failed to add', 400, false)
+              return responseStandard(res, 'Cannot add Item to Cart', 400, false)
             }
           } catch (err) {
             return responseStandard(res, 'Internal server error', 500, false)
@@ -86,53 +51,119 @@ module.exports = {
         } catch (err) {
           return responseStandard(res, 'Internal server error', 500, false)
         }
-      } catch (err) {
-        return responseStandard(res, 'Internal server error', 500, false)
+      } else {
+        return responseStandard(res, 'Cannot get Item', 400, false)
       }
     } else {
-      return responseStandard(res, 'Failed to get amount', 400, false)
+      return responseStandard(res, 'Forbidden Access', 401, false)
     }
   },
-  deleteCart: async (req, res) => {
+  updateQuantityCart: async (req, res) => {
     const { id } = req.params
-    try {
-      const data = await getDetailIDCartModel(id)
-      if (data.length) {
+    const roleId = req.user.role_id
+    if (roleId === 3) {
+      let { quantity } = req.body
+      quantity = parseInt(quantity)
+      if (quantity > 0) {
         try {
-          const result = await deleteCartModel(id)
-          if (result.affectedRows) {
-            return responseStandard(res, `Cart with id ${id} has been deleted`)
-          } else {
-            return responseStandard(res, 'Cannot delete', 400, false)
+          const data = await getDetailIDCartModel(id)
+          const cartID = data[0].id
+          const itemID = data[0].item_id
+          try {
+            const resultPrice = await getPriceNameItemModel(itemID)
+            const { price } = resultPrice[0]
+            try {
+              const result = await updateQuantityCartModel([cartID, quantity])
+              if (result.affectedRows) {
+                try {
+                  const total = price * quantity
+                  const updateTotal = await updateTotalModel([total, cartID])
+                  if (updateTotal.affectedRows) {
+                    return responseStandard(res, 'Quantity updated')
+                  } else {
+                    return responseStandard(res, 'Failed to update total', 400, false)
+                  }
+                } catch (err) {
+                  return responseStandard(res, 'Internal server error', 500, false)
+                }
+              } else {
+                return responseStandard(res, 'Failed to add', 400, false)
+              }
+            } catch (err) {
+              return responseStandard(res, 'Internal server error', 500, false)
+            }
+          } catch (err) {
+            return responseStandard(res, 'Internal server error', 500, false)
           }
         } catch (err) {
           return responseStandard(res, 'Internal server error', 500, false)
         }
       } else {
-        return responseStandard(res, 'Id item in Cart not found', 404, false)
+        return responseStandard(res, 'Failed to get quantity, Not Found', 404, false)
       }
-    } catch (err) {
-      return responseStandard(res, 'Internal server error', 500, false)
+    } else {
+      return responseStandard(res, 'Forbidden Access', 401, false)
     }
   },
-  getCart: async (_req, res) => {
-    try {
-      const resultSummary = await getSummaryCartModel()
-      const { summary } = resultSummary[0]
+  deleteCart: async (req, res) => {
+    const { id } = req.params
+    const roleId = req.user.role_id
+    if (roleId === 3) {
       try {
-        const result = await getCartModel()
-        console.log(result)
-        if (result.length) {
-          return responseStandard(res, 'Summary price of Items', 200, true, { data: result, summary: summary })
+        const data = await getDetailIDCartModel(id)
+        if (data.length) {
+          try {
+            const result = await deleteCartModel(id)
+            if (result.affectedRows) {
+              return responseStandard(res, `Cart with id ${id} has been deleted`)
+            } else {
+              return responseStandard(res, 'Cannot delete', 400, false)
+            }
+          } catch (err) {
+            return responseStandard(res, 'Internal server error', 500, false)
+          }
         } else {
-          return responseStandard(res, 'Failed to set Cart', 400, false)
+          return responseStandard(res, 'Id item in Cart not found', 404, false)
         }
       } catch (err) {
-        console.log(err)
         return responseStandard(res, 'Internal server error', 500, false)
       }
-    } catch (err) {
-      return responseStandard(res, 'Internal server error', 500, false)
+    } else {
+      return responseStandard(res, 'Forbidden Access', 401, false)
+    }
+  },
+  getCart: async (req, res) => {
+    const { id } = req.user
+    const roleId = req.user.role_id
+    if (roleId === 3) {
+      try {
+        const resultSummary = await getSummaryCartModel(id)
+        const { summary } = resultSummary[0]
+        try {
+          const getCart = await getCartModel(id)
+          if (getCart.length) {
+            const results = getCart.map(e => {
+              return {
+                id: e.my_cart_id,
+                item: e.name,
+                price: e.price,
+                quantity: e.quantity,
+                total: e.total
+              }
+            })
+
+            return responseStandard(res, 'Summary price of Items', 200, true, { data: results, summary: summary })
+          } else {
+            return responseStandard(res, 'Failed to set Cart', 400, false)
+          }
+        } catch (err) {
+          return responseStandard(res, 'Internal server error', 500, false)
+        }
+      } catch (err) {
+        return responseStandard(res, 'Internal server error', 500, false)
+      }
+    } else {
+      return responseStandard(res, 'Forbidden Access', 401, false)
     }
   }
 }

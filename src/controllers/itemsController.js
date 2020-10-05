@@ -85,14 +85,12 @@ module.exports = {
             return responseStandard(res, `Images with item id ${id} not found`, 404, false)
           }
         } catch (err) {
-          console.log(err)
           return responseStandard(res, 'Internal server error', 500, false)
         }
       } else {
         return responseStandard(res, `Data with id ${id} not found`, 404, false)
       }
     } catch (err) {
-      console.log(err)
       return responseStandard(res, 'Internal Server Error', 500, false)
     }
   },
@@ -251,11 +249,11 @@ module.exports = {
           const { pages, currentPage } = pageInfo
 
           if (currentPage < pages) {
-            pageInfo.nextLink = `http://localhost:8080/public/items?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
+            pageInfo.nextLink = `http://localhost:8080/private/items?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
           }
 
           if (currentPage > 1) {
-            pageInfo.prevLink = `http://localhost:8080/public/items?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
+            pageInfo.prevLink = `http://localhost:8080/private/items?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
           }
 
           return responseStandard(res, 'List of Items', 200, true, { dataResult, pageInfo })

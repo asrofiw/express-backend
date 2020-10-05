@@ -1,22 +1,145 @@
 const jwt = require('jsonwebtoken')
 const response = require('../helpers/response')
-const { getUserByConditionModel } = require('../models/userModel')
+const joi = require('joi')
+const bcrypt = require('bcryptjs')
+const {
+  getUserByConditionModel,
+  getUserRoleByConditionModel,
+  createUserDetailModel,
+  createUserModel
+} = require('../models/userModel')
 
 module.exports = {
-  loginController: async (req, res) => {
-    const { email, password } = req.body
-    const credentials = {
-      email,
-      password
+  createUserCustomer: async (req, res) => {
+    const schema = joi.object({
+      name: joi.string().required(),
+      email: joi.string().required(),
+      password: joi.string().required()
+    })
+    let { value: results, error } = schema.validate(req.body)
+
+    if (error) {
+      return response(res, 'Error', 401, false, { error: error.message })
+    } else {
+      const { email, password } = results
+      const isExists = await getUserByConditionModel({ email })
+      if (isExists.length > 0) {
+        return response(res, 'Email already used', 401, false)
+      } else {
+        try {
+          const userCostumer = {
+            name: results.name,
+            role_id: 3
+          }
+          const userDetail = await createUserDetailModel(userCostumer)
+          if (userDetail.affectedRows) {
+            const id = userDetail.insertId
+            const salt = await bcrypt.genSalt(10)
+            const hashedPassword = await bcrypt.hash(password, salt)
+            results = {
+              ...results,
+              password: hashedPassword
+            }
+            try {
+              const data = await createUserModel([id, email, hashedPassword])
+              if (data.affectedRows) {
+                results = {
+                  id: id,
+                  ...results,
+                  password: undefined
+                }
+                return response(res, 'Create user successfully', 200, true, { results })
+              } else {
+                return response(res, 'Failed to create user access', 401, false)
+              }
+            } catch (err) {
+              return response(res, 'Internal server error', 500, false)
+            }
+          }
+        } catch (err) {
+          return response(res, 'Internal server error', 500, false)
+        }
+      }
     }
+  },
+  createUserSeller: async (req, res) => {
+    const schema = joi.object({
+      name: joi.string().required(),
+      store_name: joi.string().required(),
+      email: joi.string().required(),
+      phone_number: joi.string().required(),
+      password: joi.string().required()
+    })
+
+    let { value: results, error } = schema.validate(req.body)
+
+    if (error) {
+      return response(res, 'Error', 401, false, { error: error.message })
+    } else {
+      const { email, password } = results
+      const isExists = await getUserByConditionModel({ email })
+      if (isExists.length > 0) {
+        return response(res, 'Email already used', 401, false)
+      } else {
+        try {
+          const userSeller = {
+            name: results.name,
+            store_name: results.store_name,
+            phone_number: results.phone_number,
+            role_id: 2
+          }
+          const userDetail = await createUserDetailModel(userSeller)
+          if (userDetail.affectedRows) {
+            const id = userDetail.insertId
+            const salt = await bcrypt.genSalt(10)
+            const hashedPassword = await bcrypt.hash(password, salt)
+            results = {
+              ...results,
+              password: hashedPassword
+            }
+            try {
+              const data = await createUserModel([id, email, hashedPassword])
+              if (data.affectedRows) {
+                results = {
+                  id: id,
+                  ...results,
+                  password: undefined
+                }
+                return response(res, 'Create user successfully', 200, true, { results })
+              } else {
+                return response(res, 'Failed to create user access', 401, false)
+              }
+            } catch (err) {
+              return response(res, 'Internal server error', 500, false)
+            }
+          }
+        } catch (err) {
+          return response(res, 'Internal server error', 500, false)
+        }
+      }
+    }
+  },
+  loginController: async (req, res) => {
+    const schema = joi.object({
+      email: joi.string().required(),
+      password: joi.string().required()
+    })
+    const { value, error } = schema.validate(req.body)
+    if (error) {
+      return response(res, 'Login Failed', 401, false)
+    }
+
     try {
-      console.log(credentials)
+      const { email, password } = value
       const data = await getUserByConditionModel({ email })
-      console.log(data)
-      if (data.length) {
-        jwt.sign({ id: data.id }, 'KODERAHASIA', (_err, token) => {
-          return response(res, `Token ${token}`)
-        })
+      if (data.length === 1) {
+        const user = data[0]
+        const pass = bcrypt.compareSync(password, user.password)
+        if (pass) {
+          const getRole = await getUserRoleByConditionModel({ id: user.user_id })
+          const token = jwt.sign({ id: user.user_id, role_id: getRole[0].role_id }, 'KODERAHASIA')
+          return response(res, 'Login Successfully', 200, true, { token })
+        }
       } else {
         return response(res, 'Wrong email or password', 400, false)
       }
