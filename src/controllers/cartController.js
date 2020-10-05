@@ -10,7 +10,7 @@ const {
   updateTotalModel
 } = require('../models/cartModel')
 const responseStandard = require('../helpers/response')
-// const { getImagesModel } = require('../models/itemsModel')
+const { getImagesModel } = require('../models/itemsModel')
 
 module.exports = {
   createCart: async (req, res) => {
@@ -142,13 +142,24 @@ module.exports = {
         try {
           const getCart = await getCartModel(id)
           if (getCart.length) {
-            const results = getCart.map(e => {
+            let url = []
+            for await (const e of getCart) {
+              let getImage = await getImagesModel(e.item_id)
+              if (!getImage.length) {
+                url.push('There is no image on this item')
+              } else {
+                url.push(`${Object.values(getImage[0])}`)
+              }
+            }
+
+            const results = getCart.map((e, i) => {
               return {
                 id: e.my_cart_id,
                 item: e.name,
                 price: e.price,
                 quantity: e.quantity,
-                total: e.total
+                total: e.total,
+                image: url[i]
               }
             })
 
@@ -157,6 +168,7 @@ module.exports = {
             return responseStandard(res, 'Failed to set Cart', 400, false)
           }
         } catch (err) {
+          console.log(err)
           return responseStandard(res, 'Internal server error', 500, false)
         }
       } catch (err) {

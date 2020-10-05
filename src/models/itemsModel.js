@@ -26,7 +26,6 @@ module.exports = {
   },
   getImagesModel: (id) => {
     const query = `SELECT url from items_image WHERE items_id = ${id}`
-    console.log(query)
     return model(query)
   },
   getDetailItemIDModel: (id) => {
