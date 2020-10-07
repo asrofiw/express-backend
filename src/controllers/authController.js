@@ -48,7 +48,7 @@ module.exports = {
                   ...results,
                   password: undefined
                 }
-                return response(res, 'Create user successfully', 200, true, { results })
+                return response(res, 'Register as a new user success', 200, true, { results })
               } else {
                 return response(res, 'Failed to create user access', 401, false)
               }
@@ -105,7 +105,7 @@ module.exports = {
                   ...results,
                   password: undefined
                 }
-                return response(res, 'Create user successfully', 200, true, { results })
+                return response(res, 'Register as a Seller successfully', 200, true, { results })
               } else {
                 return response(res, 'Failed to create user access', 401, false)
               }

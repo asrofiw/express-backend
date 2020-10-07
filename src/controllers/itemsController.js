@@ -15,47 +15,53 @@ const {
 
 module.exports = {
   createItem: async (req, res) => {
-    const { name, price, description, categoryID, subCategoryID } = req.body
-    const imagesUpload = req.files
-    let path = imagesUpload.map(element => {
-      return element.path
-    })
-    path = path.map(element => {
-      return element.split('\\')
-    })
-    path.map(element => element.shift())
+    const { id } = req.user
+    const roleId = req.user.role_id
+    if (roleId === 2) {
+      const { name, price, description, categoryID, subCategoryID } = req.body
+      const imagesUpload = req.files
+      let path = imagesUpload.map(element => {
+        return element.path
+      })
+      path = path.map(element => {
+        return element.split('\\')
+      })
+      path.map(element => element.shift())
 
-    if (name && price && description && categoryID && subCategoryID) {
-      try {
-        const result = await createItemModel([name, price, description, categoryID, subCategoryID])
-        let data = {
-          id: result.insertId,
-          ...req.body
-        }
-
+      if (name && price && description && categoryID && subCategoryID) {
         try {
-          const { id } = data
-          const urlImage = path.map(element => {
-            return `(${id}, '${process.env.APP_URL.concat(element.join('/'))}'), `
-          })
-          const images = await createImageModel(urlImage.join('').slice(0, -2))
-          if (images.affectedRows) {
-            data = {
-              ...data,
-              image: urlImage
+          const result = await createItemModel([name, price, description, categoryID, subCategoryID])
+          let data = {
+            id: result.insertId,
+            ...req.body
+          }
+
+          try {
+            const { id } = data
+            const urlImage = path.map(element => {
+              return `(${id}, '${process.env.APP_URL.concat(element.join('/'))}'), `
+            })
+            const images = await createImageModel(urlImage.join('').slice(0, -2))
+            if (images.affectedRows) {
+              data = {
+                ...data,
+                image: urlImage
+              }
+              return responseStandard(res, 'Item has been created', 200, true, { data })
+            } else {
+              return responseStandard(res, 'Failed to upload image', 400, false)
             }
-            return responseStandard(res, 'Item has been created', 200, true, { data })
-          } else {
-            return responseStandard(res, 'Failed to upload image', 400, false)
+          } catch (err) {
+            return responseStandard(res, 'Internal server error', 500, false)
           }
         } catch (err) {
           return responseStandard(res, 'Internal server error', 500, false)
         }
-      } catch (err) {
-        return responseStandard(res, 'Internal server error', 500, false)
+      } else {
+        return responseStandard(res, 'All field must be filled', 400, false)
       }
     } else {
-      return responseStandard(res, 'All field must be filled', 400, false)
+      return responseStandard(res, 'Forbidden access', 401, false)
     }
   },
   getDetailItem: async (req, res) => {

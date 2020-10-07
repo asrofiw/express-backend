@@ -142,9 +142,9 @@ module.exports = {
         try {
           const getCart = await getCartModel(id)
           if (getCart.length) {
-            let url = []
+            const url = []
             for await (const e of getCart) {
-              let getImage = await getImagesModel(e.item_id)
+              const getImage = await getImagesModel(e.item_id)
               if (!getImage.length) {
                 url.push('There is no image on this item')
               } else {
@@ -156,10 +156,10 @@ module.exports = {
               return {
                 id: e.my_cart_id,
                 item: e.name,
+                image: url[i],
                 price: e.price,
                 quantity: e.quantity,
-                total: e.total,
-                image: url[i]
+                total: e.total
               }
             })
 
@@ -168,7 +168,6 @@ module.exports = {
             return responseStandard(res, 'Failed to set Cart', 400, false)
           }
         } catch (err) {
-          console.log(err)
           return responseStandard(res, 'Internal server error', 500, false)
         }
       } catch (err) {

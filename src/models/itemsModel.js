@@ -12,7 +12,7 @@ module.exports = {
   createImageModel: (data) => {
     const query = `INSERT INTO items_image (items_id, url)
       VALUES ${data}`
-    return model(query, data)
+    return model(query)
   },
   getDetailItemModel: (id) => {
     const query = `SELECT items.id, ${table}.name, price, ${table}.description,

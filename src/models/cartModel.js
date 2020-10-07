@@ -40,6 +40,14 @@ module.exports = {
     WHERE my_cart.user_id = ${id}`
     return model(query)
   },
+  getCartIdModel: (id) => {
+    const query = `SELECT *
+    FROM my_cart 
+    INNER JOIN my_cart_total ON my_cart_total.my_cart_id = my_cart.id
+    INNER JOIN items ON items.id = my_cart.item_id
+    WHERE my_cart.id = ${id}`
+    return model(query)
+  },
   getSummaryCartModel: (id) => {
     const query = `SELECT SUM(my_cart_total.total) AS summary FROM my_cart_total
     INNER JOIN my_cart ON my_cart.id = my_cart_total.my_cart_id

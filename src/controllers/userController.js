@@ -9,9 +9,6 @@ const {
   createUserAddressModel,
   updateUserAddressModel,
   getUserAddressModel,
-  getStoreModel,
-  createStoreModel,
-  updateStoreModel,
   getSellerDetailModel,
   createUserBalanceModel,
   topUpBalanceModel,
@@ -97,7 +94,7 @@ module.exports = {
               id: item.user_id,
               name: item.name,
               store_name: item.store_name,
-              description: item.description,
+              store_description: item.store_description,
               email: item.email,
               phone: item.phone_number,
               image: item.image
@@ -325,7 +322,7 @@ module.exports = {
       const schema = joi.object({
         name: joi.string(),
         store_name: joi.string(),
-        description: joi.string(),
+        store_description: joi.string(),
         email: joi.string(),
         phone_number: joi.string()
       })
@@ -368,53 +365,19 @@ module.exports = {
         }
 
         delete results.email
-
-        if (Object.keys(results).includes('store_name') || Object.keys(results).includes('description')) {
-          const storeName = results.store_name
-          const isExists = await getStoreModel({ store_name: storeName })
-          if (isExists.length > 0) {
-            const { description } = results
-            const store = {
-              store_name: storeName,
-              description: description
+        if (Object.values(results).length > 0) {
+          try {
+            const data = await updateUserDetailModel(id, results)
+            if (data.affectedRows) {
+              return response(res, 'Data has been updated')
+            } else {
+              return response(res, `User with id ${id} not found`, 404, false)
             }
-            const updateStore = await updateStoreModel(store, id)
-            if (!updateStore.affectedRows) {
-              return response(res, 'Failed to change store name', 400, false)
-            }
-          } else {
-            try {
-              const { description } = results
-              const storeName = results.store_name
-              const store = {
-                store_name: storeName,
-                description: description,
-                user_id: id
-              }
-              const createStore = await createStoreModel(store)
-              if (!createStore.affectedRows) {
-                return response(res, 'Failed to add store name', 400, false)
-              }
-            } catch (err) {
-              return response(res, 'Internal server error \'create store\'')
-            }
-          }
-
-          delete results.store_name && delete results.description
-          if (Object.values(results).length > 0) {
-            try {
-              const data = await updateUserDetailModel(id, results)
-              if (data.affectedRows) {
-                return response(res, 'Data has been update')
-              } else {
-                return response(res, `User with id ${id} not found`, 404, false)
-              }
-            } catch (err) {
-              return response(res, 'Internal server error \'update userDetail\'', 500, false)
-            }
+          } catch (err) {
+            return response(res, 'Internal server error \'update userDetail\'', 500, false)
           }
         }
-        return response(res, 'Data has been updated')
+        return response(res, 'Email has been updated')
       }
     } else {
       return response(res, 'Forbidden Access', 401, false)
@@ -455,6 +418,7 @@ module.exports = {
     const roleId = req.user.role_id
     if (roleId === 3) {
       const schema = joi.object({
+        payment_method: joi.string().required(),
         top_up: joi.string().required()
       })
       const { value, err } = schema.validate(req.body)
@@ -462,7 +426,8 @@ module.exports = {
         return response(res, 'Error', 400, false, { error: err.message })
       }
       try {
-        const getBalance = await getBalanceModel(id)
+        const paymentMethod = value.payment_method
+        const getBalance = await getBalanceModel(id, paymentMethod)
         if (getBalance.length) {
           const results = {
             balance: parseInt(getBalance[0].balance) + parseInt(value.top_up)

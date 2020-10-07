@@ -9,12 +9,12 @@ module.exports = {
     const query = `INSERT INTO transaction (transaction_id, item_id, item_name, quantity, item_price, total, user_id) VALUES ${data}`
     return model(query)
   },
-  getTransactionModel: () => {
-    const query = 'SELECT * FROM transaction'
+  getTransactionModel: (id) => {
+    const query = `SELECT * FROM transaction WHERE user_id = ${id} GROUP BY transaction_id `
     return model(query)
   },
-  getDetailTransactionModel: (id) => {
-    const query = `SELECT * FROM transaction WHERE transaction_id = ${id}`
+  getDetailTransactionModel: (id, transactionId) => {
+    const query = `SELECT * FROM transaction WHERE user_id = ${id} && transaction_id = ${transactionId}`
     return model(query)
   }
 }

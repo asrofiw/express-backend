@@ -40,9 +40,7 @@ module.exports = {
   getSellerDetailModel: (id) => {
     const query = `SELECT * FROM users_detail
       INNER JOIN users ON users.user_id = users_detail.id
-      INNER JOIN stores ON stores.user_id = users_detail.id
       WHERE users_detail.id = ${id}`
-    console.log(query)
     return model(query)
   },
   getUserAddressModel: (id) => {
@@ -81,8 +79,8 @@ module.exports = {
     const query = `UPDATE users_balance SET ? WHERE user_id = ${id}`
     return model(query, data)
   },
-  getBalanceModel: (id) => {
-    const query = `SELECT balance from users_balance WHERE user_id = ${id}`
+  getBalanceModel: (id, payment) => {
+    const query = `SELECT balance from users_balance WHERE user_id = ${id} && payment_method = '${payment}'`
     return model(query)
   },
   getDetailBalanceModel: (id) => {

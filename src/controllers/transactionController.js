@@ -1,3 +1,4 @@
+const Joi = require('joi')
 const response = require('../helpers/response')
 const { getCheckoutByConditionModel, getSummaryCheckoutModel, deleteCheckoutModel } = require('../models/checkoutModel')
 const { getTransactionIdModel, createTransactionModel, getTransactionModel, getDetailTransactionModel } = require('../models/transactionModel')
@@ -8,6 +9,15 @@ module.exports = {
     const { id } = req.user
     const roleId = req.user.role_id
     if (roleId === 3) {
+      const schema = Joi.object({
+        payment_method: Joi.string()
+      })
+
+      const { value, error } = schema.validate(req.body)
+      if (error) {
+        return response(res, 'Error', 402, false, { error: error.message })
+      }
+      const paymentMethod = value.payment_method
       const getCheckout = await getCheckoutByConditionModel(id)
       if (getCheckout.length) {
         let transactionId; let orderFee; let balance = 0
@@ -36,7 +46,7 @@ module.exports = {
         }
         const deliveryFee = 10000
         const summary = orderFee + deliveryFee
-        const getBalance = await getBalanceModel(id)
+        const getBalance = await getBalanceModel(id, paymentMethod)
         if (getBalance.length) {
           balance = getBalance[0].balance
         } else {
@@ -102,18 +112,16 @@ module.exports = {
     }
   },
   getTransaction: async (req, res) => {
+    const { id } = req.user
     const roleId = req.user.role_id
     if (roleId === 3) {
       try {
-        const getData = await getTransactionModel()
+        const getData = await getTransactionModel(id)
         if (getData.length) {
           const data = getData.map(e => {
             return {
               transaction_id: e.transaction_id,
-              item: e.item_name,
-              quantity: e.quantity,
-              price: e.item_price,
-              total: e.total
+              date: e.create_at
             }
           })
           return response(res, 'History Order', 200, true, { data })
@@ -128,11 +136,12 @@ module.exports = {
     }
   },
   getDetailTransaction: async (req, res) => {
-    const { id } = req.params
+    const transactionId = req.params.id
+    const { id } = req.user
     const roleId = req.user.role_id
     if (roleId === 3) {
       try {
-        const data = await getDetailTransactionModel(id)
+        const data = await getDetailTransactionModel(id, transactionId)
         if (data.length) {
           const results = data.map(e => {
             return {
