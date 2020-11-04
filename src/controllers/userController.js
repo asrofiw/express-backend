@@ -1,3 +1,4 @@
+const { APP_URL } = process.env
 const response = require('../helpers/response')
 const {
   getUserByConditionModel,
@@ -71,6 +72,18 @@ module.exports = {
               image: item.image
             }
           })
+          let { image } = data[0]
+
+          if (image === null) {
+            image = null
+          } else {
+            image = APP_URL.concat(image)
+          }
+
+          data[0] = {
+            ...data[0],
+            image: image
+          }
           return response(res, `Detail user with id ${id}`, 200, true, { data })
         } else {
           return response(res, `User with ID ${id} not found`, 404, false)
@@ -161,13 +174,13 @@ module.exports = {
 
       let { value: results, error } = schema.validate(req.body)
 
-      let urlImage = process.env.APP_URL
+      let urlImage = ''
       if (req.file) {
         let { path } = req.file
         path = path.split('\\')
         path.shift()
         path = path.join('/')
-        urlImage = urlImage.concat(path)
+        urlImage = path
         results = {
           ...results,
           image: urlImage
@@ -175,15 +188,14 @@ module.exports = {
       } else {
         urlImage = ''
       }
-
       if (error) {
-        return response(res, 'Error', 401, false, { error: error.message })
+        return response(res, 'Error', 400, false, { error: error.message })
       } else {
         const { email } = results
         if (email) {
           const isExists = await getUserByConditionModel({ email })
           if (isExists.length > 0) {
-            return response(res, 'Email already used', 401, false)
+            return response(res, 'Email already used', 400, false)
           } else {
             try {
               const updateAccess = await updateUserAccessModel(id, { email })
@@ -208,6 +220,8 @@ module.exports = {
           } catch (err) {
             return response(res, 'Internal server error \'update userDetail\'', 500, false)
           }
+        } else if (req.file === undefined) {
+          return response(res, 'Failed to upload image', 400, false)
         }
         return response(res, 'Email has been updated')
       }
@@ -244,11 +258,21 @@ module.exports = {
 
       let { value: results, error } = schema.validate(req.body)
       if (error) {
-        return response(res, 'Error', 401, false, { error: error.message })
+        return response(res, 'All field should be filled', 401, false, { error: error.message })
       } else {
         try {
+          let { isPrimary } = results
+          if (isPrimary === 'true') {
+            isPrimary = true
+          } else if (isPrimary === 'false') {
+            isPrimary = false
+          } else {
+            return response(res, 'isPrimary should be true or false', 400, false)
+          }
+
           results = {
             ...results,
+            isPrimary: isPrimary,
             user_id: id
           }
           const userAddress = await createUserAddressModel(results)
@@ -278,11 +302,24 @@ module.exports = {
         postal_code: joi.string(),
         isPrimary: joi.string()
       })
-      const { value: results, error } = schema.validate(req.body)
+      let { value: results, error } = schema.validate(req.body)
       if (error) {
         return response(res, 'Error', 401, false, { error: error.message })
       } else {
         try {
+          let { isPrimary } = results
+          if (isPrimary === 'true') {
+            isPrimary = true
+          } else if (isPrimary === 'false') {
+            isPrimary = false
+          } else {
+            return response(res, 'isPrimary should be true or false', 400, false)
+          }
+
+          results = {
+            ...results,
+            isPrimary: isPrimary
+          }
           const data = await updateUserAddressModel(id, results)
           if (data.affectedRows) {
             return response(res, 'Update data user\'s shipping address success')

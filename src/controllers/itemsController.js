@@ -1,3 +1,4 @@
+const { APP_URL } = process.env
 const qs = require('querystring')
 const responseStandard = require('../helpers/response')
 const {
@@ -15,7 +16,7 @@ const {
 
 module.exports = {
   createItem: async (req, res) => {
-    const { id } = req.user
+    // const { id } = req.user
     const roleId = req.user.role_id
     if (roleId === 2) {
       const { name, price, description, categoryID, subCategoryID } = req.body
@@ -37,9 +38,9 @@ module.exports = {
           }
 
           try {
-            const { id } = data
+            const idItem = data.id
             const urlImage = path.map(element => {
-              return `(${id}, '${process.env.APP_URL.concat(element.join('/'))}'), `
+              return `(${idItem}, '${process.env.APP_URL.concat(element.join('/'))}'), `
             })
             const images = await createImageModel(urlImage.join('').slice(0, -2))
             if (images.affectedRows) {
@@ -85,11 +86,13 @@ module.exports = {
               ...data[0],
               url: url
             }
-
-            return responseStandard(res, `Detail item ${data.name}`, 200, true, { data })
           } else {
-            return responseStandard(res, `Images with item id ${id} not found`, 404, false)
+            data = {
+              ...data[0],
+              url: null
+            }
           }
+          return responseStandard(res, `Detail item ${data.name}`, 200, true, { data })
         } catch (err) {
           return responseStandard(res, 'Internal server error', 500, false)
         }
@@ -193,16 +196,21 @@ module.exports = {
       searchValue = search || ''
     }
 
+    let sortingItem = {}
+    console.log(req.query)
+
     let sortKey = ''
     let sortValue = ''
 
     if (typeof sort === 'object') {
       sortKey = Object.keys(sort)[0]
       sortValue = Object.values(sort)[0]
+      sortingItem = `sort[${sortKey}]=${sortValue}`
     } else {
       sortKey = sort || 'id'
       sortValue = 'ASC'
     }
+    console.log(sortingItem)
 
     if (searchKey === 'category') {
       searchKey = 'categories.category_name'
@@ -255,11 +263,11 @@ module.exports = {
           const { pages, currentPage } = pageInfo
 
           if (currentPage < pages) {
-            pageInfo.nextLink = `http://localhost:8080/private/items?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
+            pageInfo.nextLink = `${APP_URL}public/items?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
           }
 
           if (currentPage > 1) {
-            pageInfo.prevLink = `http://localhost:8080/private/items?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
+            pageInfo.prevLink = `${APP_URL}public/items?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
           }
 
           return responseStandard(res, 'List of Items', 200, true, { dataResult, pageInfo })

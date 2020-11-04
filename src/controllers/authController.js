@@ -19,7 +19,7 @@ module.exports = {
     let { value: results, error } = schema.validate(req.body)
 
     if (error) {
-      return response(res, 'Error', 401, false, { error: error.message })
+      return response(res, 'Oops! You have to fill all form for register!', 401, false, { error: error.message })
     } else {
       const { email, password } = results
       const isExists = await getUserByConditionModel({ email })
@@ -48,7 +48,7 @@ module.exports = {
                   ...results,
                   password: undefined
                 }
-                return response(res, 'Register as a new user success', 200, true, { results })
+                return response(res, 'Congratulation! Now you have an account!', 200, true, { results })
               } else {
                 return response(res, 'Failed to create user access', 401, false)
               }

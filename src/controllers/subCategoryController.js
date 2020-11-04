@@ -1,3 +1,4 @@
+const { APP_URL } = process.env
 const qs = require('querystring')
 const response = require('../helpers/response')
 const { createSubCategoryModel, getAllSubCategoryModel, updateSubCategoryModel, deleteSubCategoryModel, getCountAllSubCategoryModel, getDetailSubCategoryIDModel, getDetailSubCategoryModel, getCountSubCategoryModel } = require('../models/subCategoryModel')
@@ -51,11 +52,11 @@ module.exports = {
           const { pages, currentPage } = pageInfo
 
           if (currentPage < pages) {
-            pageInfo.nextLink = `http://localhost:8080/sub-category?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
+            pageInfo.nextLink = `${APP_URL}sub-category?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
           }
 
           if (currentPage > 1) {
-            pageInfo.prevLink = `http://localhost:8080/sub-category?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
+            pageInfo.prevLink = `${APP_URL}sub-category?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
           }
           return response(res, 'List of Sub Category', 200, true, { data: result, pageInfo })
         } catch (err) {
@@ -143,11 +144,11 @@ module.exports = {
           const { pages, currentPage } = pageInfo
 
           if (currentPage < pages) {
-            pageInfo.nextLink = `http://localhost:8080/sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
+            pageInfo.nextLink = `${APP_URL}sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
           }
 
           if (currentPage > 1) {
-            pageInfo.prevLink = `http://localhost:8080/sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
+            pageInfo.prevLink = `${APP_URL}sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
           }
           return response(res, `List of Sub Category ${name}`, 200, true, { data: result, pageInfo })
         } catch (err) {

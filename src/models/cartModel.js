@@ -53,5 +53,9 @@ module.exports = {
     INNER JOIN my_cart ON my_cart.id = my_cart_total.my_cart_id
     WHERE my_cart.user_id = ${id}`
     return model(query)
+  },
+  getCountCartModel: (id) => {
+    const query = `SELECT COUNT(id) AS count FROM my_cart WHERE user_id = ${id}`
+    return model(query)
   }
 }

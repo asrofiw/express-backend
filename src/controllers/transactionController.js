@@ -1,6 +1,7 @@
 const Joi = require('joi')
 const response = require('../helpers/response')
-const { getCheckoutByConditionModel, getSummaryCheckoutModel, deleteCheckoutModel } = require('../models/checkoutModel')
+const { deleteCartModel } = require('../models/cartModel')
+const { getCheckoutByConditionModel, getSummaryCheckoutModel } = require('../models/checkoutModel')
 const { getTransactionIdModel, createTransactionModel, getTransactionModel, getDetailTransactionModel } = require('../models/transactionModel')
 const { getBalanceModel, topUpBalanceModel } = require('../models/userModel')
 
@@ -10,14 +11,14 @@ module.exports = {
     const roleId = req.user.role_id
     if (roleId === 3) {
       const schema = Joi.object({
-        payment_method: Joi.string()
+        paymentMethod: Joi.string()
       })
 
       const { value, error } = schema.validate(req.body)
       if (error) {
-        return response(res, 'Error', 402, false, { error: error.message })
+        return response(res, 'Select payment method', 400, false, { error: error.message })
       }
-      const paymentMethod = value.payment_method
+      const { paymentMethod } = value
       const getCheckout = await getCheckoutByConditionModel(id)
       if (getCheckout.length) {
         let transactionId; let orderFee; let balance = 0
@@ -27,9 +28,10 @@ module.exports = {
         } else {
           transactionId = getTransactionId[getTransactionId.length - 1].transaction_id + 1
         }
-        let data = getCheckout.map(e => {
+        const data = getCheckout.map(e => {
           return {
             transaction_id: transactionId,
+            cart_id: e.cart_id,
             item_id: e.item_id,
             item_name: e.item_name,
             quantity: e.quantity,
@@ -64,28 +66,29 @@ module.exports = {
                 const updateBalance = await topUpBalanceModel({ balance: balance }, id)
                 if (updateBalance.affectedRows) {
                   try {
-                    const deleteCheckout = await deleteCheckoutModel(id)
-                    if (deleteCheckout.affectedRows) {
-                      data = data.map(e => {
-                        return {
-                          transaction_id: e.transaction_id,
-                          item: e.item_name,
-                          quantity: e.quantity,
-                          price: e.item_price,
-                          total: e.total
-                        }
-                      })
-
-                      data = {
-                        ...data,
-                        order_fee: orderFee,
-                        delivery_fee: deliveryFee,
-                        summary: summary
+                    for await (const e of getCheckout) {
+                      const deleteCart = await deleteCartModel(e.cart_id)
+                      if (!deleteCart.affectedRows) {
+                        return response(res, 'Failed to delete Cart', 400, false)
                       }
-                      return response(res, 'Transaction Succes', 200, true, { data })
-                    } else {
-                      return response(res, 'Failed to delete checkout', 400, false)
                     }
+                    const items = data.map(e => {
+                      return {
+                        transaction_id: e.transaction_id,
+                        item: e.item_name,
+                        quantity: e.quantity,
+                        price: e.item_price,
+                        total: e.total
+                      }
+                    })
+
+                    const results = {
+                      items,
+                      order_fee: orderFee,
+                      delivery_fee: deliveryFee,
+                      summary: summary
+                    }
+                    return response(res, 'Transaction Succes', 200, true, { results })
                   } catch (err) {
                     return response(res, 'Internal server error \'delete checkout\'', 500, false)
                   }

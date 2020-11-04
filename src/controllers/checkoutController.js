@@ -117,7 +117,7 @@ module.exports = {
                     total: e.total
                   }
                 })
-                return response(res, 'Checkout', 200, true, { data: results, summary: summary })
+                return response(res, 'Checkout', 200, true, { data: results, summary: summary, deliveryFee: 10000 })
               }
             } catch (err) {
               return response(res, 'Internal server error \'create all checkout\'')

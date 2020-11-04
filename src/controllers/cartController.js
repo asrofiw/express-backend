@@ -7,7 +7,8 @@ const {
   getSummaryCartModel,
   getCartModel,
   createCartTotalModel,
-  updateTotalModel
+  updateTotalModel,
+  getCountCartModel
 } = require('../models/cartModel')
 const responseStandard = require('../helpers/response')
 const { getImagesModel } = require('../models/itemsModel')
@@ -152,6 +153,9 @@ module.exports = {
               }
             }
 
+            const getCount = await getCountCartModel(id)
+            const { count } = getCount[0]
+
             const results = getCart.map((e, i) => {
               return {
                 id: e.my_cart_id,
@@ -163,7 +167,7 @@ module.exports = {
               }
             })
 
-            return responseStandard(res, 'Summary price of Items', 200, true, { data: results, summary: summary })
+            return responseStandard(res, 'Summary price of Items', 200, true, { data: results, summary: summary, count: count })
           } else {
             return responseStandard(res, 'Failed to set Cart', 400, false)
           }
