@@ -140,10 +140,10 @@ module.exports = {
           const token = jwt.sign({ id: user.user_id, role_id: getRole[0].role_id }, 'KODERAHASIA')
           return response(res, 'Login Successfully', 200, true, { token })
         } else {
-          return response(res, 'Password doesn\'t match', 400, false)
+          return response(res, 'Wrong password', 400, false)
         }
       } else {
-        return response(res, 'Wrong email or password', 400, false)
+        return response(res, 'Wrong email', 400, false)
       }
     } catch (err) {
       return response(res, 'Internal server error', 500, false, { error: err.message })
