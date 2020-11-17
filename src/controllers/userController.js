@@ -186,7 +186,7 @@ module.exports = {
           image: urlImage
         }
       } else {
-        urlImage = ''
+        urlImage = undefined
       }
       if (error) {
         return response(res, 'Error', 400, false, { error: error.message })
