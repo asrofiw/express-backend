@@ -1,4 +1,3 @@
-const { APP_URL } = process.env
 const response = require('../helpers/response')
 const {
   getUserByConditionModel,
@@ -72,18 +71,7 @@ module.exports = {
               image: item.image
             }
           })
-          let { image } = data[0]
 
-          if (image === null) {
-            image = null
-          } else {
-            image = APP_URL.concat(image)
-          }
-
-          data[0] = {
-            ...data[0],
-            image: image
-          }
           return response(res, `Detail user with id ${id}`, 200, true, { data })
         } else {
           return response(res, `User with ID ${id} not found`, 404, false)
@@ -174,19 +162,16 @@ module.exports = {
 
       let { value: results, error } = schema.validate(req.body)
 
-      let urlImage = ''
+      let image = ''
       if (req.file) {
-        let { path } = req.file
-        path = path.split('\\')
-        path.shift()
-        path = path.join('/')
-        urlImage = path
+        const { filename } = req.file
+        image = `uploads/${filename}`
         results = {
           ...results,
-          image: urlImage
+          image: image
         }
       } else {
-        urlImage = undefined
+        image = undefined
       }
       if (error) {
         return response(res, 'Error', 400, false, { error: error.message })
