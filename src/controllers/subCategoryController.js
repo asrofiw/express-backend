@@ -52,11 +52,11 @@ module.exports = {
           const { pages, currentPage } = pageInfo
 
           if (currentPage < pages) {
-            pageInfo.nextLink = `${APP_URL}sub-category?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
+            pageInfo.nextLink = `${APP_URL}/public/sub-category?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
           }
 
           if (currentPage > 1) {
-            pageInfo.prevLink = `${APP_URL}sub-category?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
+            pageInfo.prevLink = `${APP_URL}/public/sub-category?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
           }
           return response(res, 'List of Sub Category', 200, true, { data: result, pageInfo })
         } catch (err) {
@@ -144,11 +144,11 @@ module.exports = {
           const { pages, currentPage } = pageInfo
 
           if (currentPage < pages) {
-            pageInfo.nextLink = `${APP_URL}sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
+            pageInfo.nextLink = `${APP_URL}/public/sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
           }
 
           if (currentPage > 1) {
-            pageInfo.prevLink = `${APP_URL}sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
+            pageInfo.prevLink = `${APP_URL}/public/sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
           }
           return response(res, `List of Sub Category ${name}`, 200, true, { data: result, pageInfo })
         } catch (err) {
