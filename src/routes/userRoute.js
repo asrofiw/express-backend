@@ -21,7 +21,7 @@ const authMiddleware = require('../middlewares/auth')
 
 // Customer profile
 router.get('/customer/profile', authMiddleware, getCustomerDetail)
-router.patch('/customer/profile', authMiddleware, uploadHelper.single('picture'), updateUserDetail)
+router.patch('/customer/profile', authMiddleware, updateUserDetail)
 // Customer Shipping-Address
 router.get('/customer/shipping-address', authMiddleware, getCustomerAddress)
 router.post('/customer/shipping-address', authMiddleware, createCustomerAddress)

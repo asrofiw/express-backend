@@ -12,9 +12,9 @@ const {
 
 module.exports = {
   createCategory: async (req, res) => {
-    const { name } = req.body
-    if (name) {
-      try {
+    try {
+      const { name } = req.body
+      if (name) {
         const result = await createCategoryModel(name)
         const data = {
           id: result.insertId,
@@ -22,13 +22,14 @@ module.exports = {
         }
 
         return responseStandard(res, 'Category has been added', 200, true, { data })
-      } catch (err) {
-        return responseStandard(res, 'Internal server error', 500, false)
+      } else {
+        return responseStandard(res, 'All field must be filled', 400, false)
       }
-    } else {
-      return responseStandard(res, 'All field must be filled', 400, false)
+    } catch (err) {
+      return responseStandard(res, 'Internal server error', 500, false, { error: err.message })
     }
   },
+
   getAllCategory: async (_req, res) => {
     try {
       const result = await getAllCategoryModel()
@@ -41,11 +42,12 @@ module.exports = {
       return responseStandard(res, 'Internal server error', 500, false)
     }
   },
-  updateCategory: async (req, res) => {
-    const { id } = req.params
-    const { name } = req.body
 
+  updateCategory: async (req, res) => {
     try {
+      const { id } = req.params
+      const { name } = req.body
+
       const result = await updateCategoryModel([id, name])
       if (result.affectedRows) {
         return responseStandard(res, `Category with id ${id} updated`)
@@ -56,20 +58,17 @@ module.exports = {
       return responseStandard(res, 'Internal server error', 500, false)
     }
   },
+
   deleteCategory: async (req, res) => {
-    const { id } = req.params
     try {
+      const { id } = req.params
       const result = await getDetailCategoryIDModel(id)
       if (result.length) {
-        try {
-          const result = await deleteCategoryModel(id)
-          if (result.affectedRows) {
-            return responseStandard(res, `Category with id ${id} has been deleted`)
-          } else {
-            return responseStandard(res, 'Cannot delete Category', 400, false)
-          }
-        } catch (err) {
-          return responseStandard(res, 'Internal server error', 500, false)
+        const result = await deleteCategoryModel(id)
+        if (result.affectedRows) {
+          return responseStandard(res, `Category with id ${id} has been deleted`)
+        } else {
+          return responseStandard(res, 'Cannot delete Category', 400, false)
         }
       } else {
         return responseStandard(res, `Cannot get detail Category with id ${id}`, 400, false)
@@ -78,38 +77,35 @@ module.exports = {
       return responseStandard(res, 'Internal server erro', 500, false)
     }
   },
+
   getDetailCategory: async (req, res) => {
-    const { id } = req.params
-    let { page, limit } = req.query
-
-    if (!limit) {
-      limit = 5
-    } else {
-      limit = parseInt(limit)
-    }
-
-    if (!page) {
-      page = 1
-    } else {
-      page = parseInt(page)
-    }
-    const offset = (page - 1) * limit
     try {
+      const { id } = req.params
+      let { page, limit } = req.query
+
+      if (!limit) {
+        limit = 5
+      } else {
+        limit = parseInt(limit)
+      }
+
+      if (!page) {
+        page = 1
+      } else {
+        page = parseInt(page)
+      }
+      const offset = (page - 1) * limit
       const result = await getDetailCategoryModel([id, limit, offset])
       if (result.length) {
-        try {
-          const data = await getCountCategoryModel(id)
-          const { count } = data[0]
-          const pageInfo = pagination(req, count, id, 'category')
-          return responseStandard(res, `List of Category ${result[0].name}`, 200, true, { data: result, pageInfo })
-        } catch (err) {
-          return responseStandard(res, 'Internal server error', 500, false)
-        }
+        const data = await getCountCategoryModel(id)
+        const { count } = data[0]
+        const pageInfo = pagination(req, count, id, 'category')
+        return responseStandard(res, `List of Category ${result[0].name}`, 200, true, { data: result, pageInfo })
       } else {
         return responseStandard(res, `There is no data on List of Category with id ${id}`, 400, false)
       }
     } catch (err) {
-      return responseStandard(res, 'Internal server error', 500, false)
+      return responseStandard(res, 'Internal server error', 500, false, { error: err.message })
     }
   }
 }

@@ -3,9 +3,9 @@ const { createRoleModel, getAllRoleModel, getRoleIdModel, updateRoleModel, delet
 
 module.exports = {
   createRole: async (req, res) => {
-    const { name, description } = req.body
-    if (name && description) {
-      try {
+    try {
+      const { name, description } = req.body
+      if (name && description) {
         const result = await createRoleModel([name, description])
         if (result.affectedRows) {
           const data = {
@@ -15,13 +15,14 @@ module.exports = {
 
           return response(res, 'Role has been created', 200, true, { data })
         }
-      } catch (err) {
-        return response(res, 'Internal server error', 500, false)
+      } else {
+        return response(res, 'Fill all column', 400, false)
       }
-    } else {
-      return response(res, 'Fill all column', 400, false)
+    } catch (err) {
+      return response(res, 'Internal server error', 500, false)
     }
   },
+
   getAllRole: async (_req, res) => {
     try {
       const result = await getAllRoleModel()
@@ -42,39 +43,37 @@ module.exports = {
       return response(res, 'Internal server error', 500, false)
     }
   },
+
   updateRole: async (req, res) => {
-    const { id } = req.params
-    const { name = '', description = '' } = req.body
-    if (name.trim() || description.trim()) {
-      try {
+    try {
+      const { id } = req.params
+      const { name = '', description = '' } = req.body
+      if (name.trim() || description.trim()) {
         const item = await getRoleIdModel(id)
         if (item.length) {
           const data = Object.entries(req.body).map(element => {
             return `${element[0]} = '${element[1]}'`
           })
-          try {
-            const result = await updateRoleModel([data, id])
-            if (result.affectedRows) {
-              return response(res, `Role with id ${id} has been update`)
-            } else {
-              return response(res, 'Failed to update Role', 400, false)
-            }
-          } catch (err) {
-            return response(res, 'Internal server error', 500, false)
+          const result = await updateRoleModel([data, id])
+          if (result.affectedRows) {
+            return response(res, `Role with id ${id} has been update`)
+          } else {
+            return response(res, 'Failed to update Role', 400, false)
           }
         } else {
           return response(res, 'Failed to get Role', 404, false)
         }
-      } catch (err) {
-        return response(res, 'Internal server error', 500, false)
+      } else {
+        return response(res, 'At least one column is filled', 400, false)
       }
-    } else {
-      return response(res, 'At least one column is filled', 400, false)
+    } catch (err) {
+      return response(res, 'Internal server error', 500, false)
     }
   },
+
   deleteRole: async (req, res) => {
-    const { id } = req.params
     try {
+      const { id } = req.params
       const item = await getRoleIdModel(id)
       if (item.length) {
         try {

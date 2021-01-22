@@ -58,6 +58,7 @@ module.exports = {
       return response(res, 'Internal server error', 500, false, { error: err.message })
     }
   },
+
   createUserSeller: async (req, res) => {
     try {
       const schema = joi.object({
@@ -111,6 +112,7 @@ module.exports = {
       return response(res, 'Internal server error', 500, false, { error: err.message })
     }
   },
+
   loginController: async (req, res) => {
     try {
       const schema = joi.object({

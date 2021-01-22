@@ -5,8 +5,8 @@ const { createSubCategoryModel, getAllSubCategoryModel, updateSubCategoryModel, 
 
 module.exports = {
   createSubCategory: async (req, res) => {
-    const { name, categoryID } = req.body
     try {
+      const { name, categoryID } = req.body
       const result = await createSubCategoryModel([name, categoryID])
       if (result.affectedRows) {
         return response(res, 'Sub Category has been created', 200, true, { data: req.body })
@@ -17,22 +17,23 @@ module.exports = {
       return response(res, 'Internal server error', 500, false)
     }
   },
+
   getAllSubCategory: async (req, res) => {
-    let { page, limit } = req.query
-
-    if (!limit) {
-      limit = 5
-    } else {
-      limit = parseInt(limit)
-    }
-
-    if (!page) {
-      page = 1
-    } else {
-      page = parseInt(page)
-    }
-    const offset = (page - 1) * limit
     try {
+      let { page, limit } = req.query
+
+      if (!limit) {
+        limit = 5
+      } else {
+        limit = parseInt(limit)
+      }
+
+      if (!page) {
+        page = 1
+      } else {
+        page = parseInt(page)
+      }
+      const offset = (page - 1) * limit
       const result = await getAllSubCategoryModel([limit, offset])
       const pageInfo = {
         count: 0,
@@ -43,37 +44,34 @@ module.exports = {
         prevLink: null
       }
       if (result.length) {
-        try {
-          const data = await getCountAllSubCategoryModel(page)
-          const { count } = data[0]
-          pageInfo.count = count
-          pageInfo.pages = Math.ceil(count / limit)
+        const data = await getCountAllSubCategoryModel(page)
+        const { count } = data[0]
+        pageInfo.count = count
+        pageInfo.pages = Math.ceil(count / limit)
 
-          const { pages, currentPage } = pageInfo
+        const { pages, currentPage } = pageInfo
 
-          if (currentPage < pages) {
-            pageInfo.nextLink = `${APP_URL}/public/sub-category?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
-          }
-
-          if (currentPage > 1) {
-            pageInfo.prevLink = `${APP_URL}/public/sub-category?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
-          }
-          return response(res, 'List of Sub Category', 200, true, { data: result, pageInfo })
-        } catch (err) {
-          return response(res, 'Internal server error', 500, false)
+        if (currentPage < pages) {
+          pageInfo.nextLink = `${APP_URL}/public/sub-category?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
         }
+
+        if (currentPage > 1) {
+          pageInfo.prevLink = `${APP_URL}/public/sub-category?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
+        }
+        return response(res, 'List of Sub Category', 200, true, { data: result, pageInfo })
       } else {
         return response(res, 'Sub Category not found', 400, false)
       }
     } catch (err) {
-      return response(res, 'Internal server error', 500, false)
+      return response(res, 'Internal server error', 500, false, { error: err.message })
     }
   },
-  updateSubCategory: async (req, res) => {
-    const { id } = req.params
-    const { name } = req.body
 
+  updateSubCategory: async (req, res) => {
     try {
+      const { id } = req.params
+      const { name } = req.body
+
       const result = await updateSubCategoryModel([id, name])
       if (result.affectedRows) {
         return response(res, `Sub Category with id ${id} has been updated`)
@@ -84,9 +82,10 @@ module.exports = {
       return response(res, 'Internal server error', 500, false)
     }
   },
+
   deleteSubCategory: async (req, res) => {
-    const { id } = req.params
     try {
+      const { id } = req.params
       const data = await getDetailSubCategoryIDModel(id)
       if (data.length) {
         try {
@@ -106,23 +105,24 @@ module.exports = {
       return response(res, 'Internal server error', 500, false)
     }
   },
+
   getDetailSubCategory: async (req, res) => {
-    const { id } = req.params
-    let { page, limit } = req.query
-
-    if (!limit) {
-      limit = 3
-    } else {
-      limit = parseInt(limit)
-    }
-
-    if (!page) {
-      page = 1
-    } else {
-      page = parseInt(page)
-    }
-    const offset = (page - 1) * limit
     try {
+      const { id } = req.params
+      let { page, limit } = req.query
+
+      if (!limit) {
+        limit = 3
+      } else {
+        limit = parseInt(limit)
+      }
+
+      if (!page) {
+        page = 1
+      } else {
+        page = parseInt(page)
+      }
+      const offset = (page - 1) * limit
       const result = await getDetailSubCategoryModel([id, limit, offset])
       const pageInfo = {
         count: 0,
@@ -135,30 +135,26 @@ module.exports = {
       }
       if (result.length) {
         const name = result[0].sub_category_name
-        try {
-          const data = await getCountSubCategoryModel([id, name])
-          const { count } = data[1]
-          pageInfo.count = count
-          pageInfo.pages = Math.ceil(count / limit)
+        const data = await getCountSubCategoryModel([id, name])
+        const { count } = data[1]
+        pageInfo.count = count
+        pageInfo.pages = Math.ceil(count / limit)
 
-          const { pages, currentPage } = pageInfo
+        const { pages, currentPage } = pageInfo
 
-          if (currentPage < pages) {
-            pageInfo.nextLink = `${APP_URL}/public/sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
-          }
-
-          if (currentPage > 1) {
-            pageInfo.prevLink = `${APP_URL}/public/sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
-          }
-          return response(res, `List of Sub Category ${name}`, 200, true, { data: result, pageInfo })
-        } catch (err) {
-          return response(res, 'Internal server error', 500, false)
+        if (currentPage < pages) {
+          pageInfo.nextLink = `${APP_URL}/public/sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
         }
+
+        if (currentPage > 1) {
+          pageInfo.prevLink = `${APP_URL}/public/sub-category/${id}?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
+        }
+        return response(res, `List of Sub Category ${name}`, 200, true, { data: result, pageInfo })
       } else {
         return response(res, `There is no data on list of Sub Category with id ${id}`, 400, false, { pageInfo })
       }
     } catch (err) {
-      return response(res, 'Internal server error', 500, false)
+      return response(res, 'Internal server error', 500, false, { error: err.message })
     }
   }
 }
