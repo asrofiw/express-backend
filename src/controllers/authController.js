@@ -11,22 +11,22 @@ const {
 
 module.exports = {
   createUserCustomer: async (req, res) => {
-    const schema = joi.object({
-      name: joi.string().required(),
-      email: joi.string().required(),
-      password: joi.string().required()
-    })
-    let { value: results, error } = schema.validate(req.body)
+    try {
+      const schema = joi.object({
+        name: joi.string().required(),
+        email: joi.string().required(),
+        password: joi.string().required()
+      })
+      let { value: results, error } = schema.validate(req.body)
 
-    if (error) {
-      return response(res, 'Oops! You have to fill all form for register!', 401, false, { error: error.message })
-    } else {
-      const { email, password } = results
-      const isExists = await getUserByConditionModel({ email })
-      if (isExists.length > 0) {
-        return response(res, 'Email already used', 401, false)
+      if (error) {
+        return response(res, 'Oops! You have to fill all form for register!', 401, false, { error: error.message })
       } else {
-        try {
+        const { email, password } = results
+        const isExists = await getUserByConditionModel({ email })
+        if (isExists.length > 0) {
+          return response(res, 'Email already used', 401, false)
+        } else {
           const userCostumer = {
             name: results.name,
             role_id: 3
@@ -40,48 +40,44 @@ module.exports = {
               ...results,
               password: hashedPassword
             }
-            try {
-              const data = await createUserModel([id, email, hashedPassword])
-              if (data.affectedRows) {
-                results = {
-                  id: id,
-                  ...results,
-                  password: undefined
-                }
-                return response(res, 'Congratulation! Now you have an account!', 200, true, { results })
-              } else {
-                return response(res, 'Failed to create user access', 401, false)
+            const data = await createUserModel([id, email, hashedPassword])
+            if (data.affectedRows) {
+              results = {
+                id: id,
+                ...results,
+                password: undefined
               }
-            } catch (err) {
-              return response(res, 'Internal server error', 500, false)
+              return response(res, 'Congratulation! Now you have an account!', 200, true, { results })
+            } else {
+              return response(res, 'Failed to create user access', 401, false)
             }
           }
-        } catch (err) {
-          return response(res, 'Internal server error', 500, false)
         }
       }
+    } catch (err) {
+      return response(res, 'Internal server error', 500, false, { error: err.message })
     }
   },
   createUserSeller: async (req, res) => {
-    const schema = joi.object({
-      name: joi.string().required(),
-      store_name: joi.string().required(),
-      email: joi.string().required(),
-      phone_number: joi.string().required(),
-      password: joi.string().required()
-    })
+    try {
+      const schema = joi.object({
+        name: joi.string().required(),
+        store_name: joi.string().required(),
+        email: joi.string().required(),
+        phone_number: joi.string().required(),
+        password: joi.string().required()
+      })
 
-    let { value: results, error } = schema.validate(req.body)
+      let { value: results, error } = schema.validate(req.body)
 
-    if (error) {
-      return response(res, 'Error', 401, false, { error: error.message })
-    } else {
-      const { email, password } = results
-      const isExists = await getUserByConditionModel({ email })
-      if (isExists.length > 0) {
-        return response(res, 'Email already used', 401, false)
+      if (error) {
+        return response(res, 'Error', 401, false, { error: error.message })
       } else {
-        try {
+        const { email, password } = results
+        const isExists = await getUserByConditionModel({ email })
+        if (isExists.length > 0) {
+          return response(res, 'Email already used', 401, false)
+        } else {
           const userSeller = {
             name: results.name,
             store_name: results.store_name,
@@ -97,39 +93,35 @@ module.exports = {
               ...results,
               password: hashedPassword
             }
-            try {
-              const data = await createUserModel([id, email, hashedPassword])
-              if (data.affectedRows) {
-                results = {
-                  id: id,
-                  ...results,
-                  password: undefined
-                }
-                return response(res, 'Register as a Seller successfully', 200, true, { results })
-              } else {
-                return response(res, 'Failed to create user access', 401, false)
+            const data = await createUserModel([id, email, hashedPassword])
+            if (data.affectedRows) {
+              results = {
+                id: id,
+                ...results,
+                password: undefined
               }
-            } catch (err) {
-              return response(res, 'Internal server error', 500, false)
+              return response(res, 'Register as a Seller successfully', 200, true, { results })
+            } else {
+              return response(res, 'Failed to create user access', 401, false)
             }
           }
-        } catch (err) {
-          return response(res, 'Internal server error', 500, false)
         }
       }
+    } catch (err) {
+      return response(res, 'Internal server error', 500, false, { error: err.message })
     }
   },
   loginController: async (req, res) => {
-    const schema = joi.object({
-      email: joi.string().required(),
-      password: joi.string().required()
-    })
-    const { value, error } = schema.validate(req.body)
-    if (error) {
-      return response(res, 'Login Failed', 401, false)
-    }
-
     try {
+      const schema = joi.object({
+        email: joi.string().required(),
+        password: joi.string().required()
+      })
+      const { value, error } = schema.validate(req.body)
+      if (error) {
+        return response(res, 'Login Failed', 401, false)
+      }
+
       const { email, password } = value
       const data = await getUserByConditionModel({ email })
       if (data.length === 1) {
