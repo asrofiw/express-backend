@@ -13,17 +13,22 @@ const {
 module.exports = {
   createCategory: async (req, res) => {
     try {
-      const { name } = req.body
-      if (name) {
-        const result = await createCategoryModel(name)
-        const data = {
-          id: result.insertId,
-          ...req.body
-        }
+      const roleId = req.user.role_id
+      if (roleId === 2) {
+        const { name } = req.body
+        if (name) {
+          const result = await createCategoryModel(name)
+          const data = {
+            id: result.insertId,
+            ...req.body
+          }
 
-        return responseStandard(res, 'Category has been added', 200, true, { data })
+          return responseStandard(res, 'Category has been added', 200, true, { data })
+        } else {
+          return responseStandard(res, 'All field must be filled', 400, false)
+        }
       } else {
-        return responseStandard(res, 'All field must be filled', 400, false)
+        return responseStandard(res, 'Forbidden access', 401, false)
       }
     } catch (err) {
       return responseStandard(res, 'Internal server error', 500, false, { error: err.message })
@@ -39,42 +44,52 @@ module.exports = {
         return responseStandard(res, 'Data not found', 400, false)
       }
     } catch (err) {
-      return responseStandard(res, 'Internal server error', 500, false)
+      return responseStandard(res, 'Internal server error', 500, false, { error: err.message })
     }
   },
 
   updateCategory: async (req, res) => {
     try {
-      const { id } = req.params
-      const { name } = req.body
+      const roleId = req.user.role_id
+      if (roleId === 2) {
+        const { id } = req.params
+        const { name } = req.body
 
-      const result = await updateCategoryModel([id, name])
-      if (result.affectedRows) {
-        return responseStandard(res, `Category with id ${id} updated`)
+        const result = await updateCategoryModel([id, name])
+        if (result.affectedRows) {
+          return responseStandard(res, 'Category updated')
+        } else {
+          return responseStandard(res, 'Failed to update Category', 400, false)
+        }
       } else {
-        return responseStandard(res, 'Failed to update Category', 400, false)
+        return responseStandard(res, 'Forbidden access', 401, false)
       }
     } catch (err) {
-      return responseStandard(res, 'Internal server error', 500, false)
+      return responseStandard(res, 'Internal server error', 500, false, { error: err.message })
     }
   },
 
   deleteCategory: async (req, res) => {
     try {
-      const { id } = req.params
-      const result = await getDetailCategoryIDModel(id)
-      if (result.length) {
-        const result = await deleteCategoryModel(id)
-        if (result.affectedRows) {
-          return responseStandard(res, `Category with id ${id} has been deleted`)
+      const roleId = req.user.role_id
+      if (roleId === 2) {
+        const { id } = req.params
+        const result = await getDetailCategoryIDModel(id)
+        if (result.length) {
+          const result = await deleteCategoryModel(id)
+          if (result.affectedRows) {
+            return responseStandard(res, 'Category has been deleted')
+          } else {
+            return responseStandard(res, 'Cannot delete Category', 400, false)
+          }
         } else {
-          return responseStandard(res, 'Cannot delete Category', 400, false)
+          return responseStandard(res, 'Category not found', 404, false)
         }
       } else {
-        return responseStandard(res, `Cannot get detail Category with id ${id}`, 400, false)
+        return responseStandard(res, 'Forbidden access', 401, false)
       }
     } catch (err) {
-      return responseStandard(res, 'Internal server erro', 500, false)
+      return responseStandard(res, 'Internal server erro', 500, false, { error: err.message })
     }
   },
 
@@ -102,7 +117,7 @@ module.exports = {
         const pageInfo = pagination(req, count, id, 'category')
         return responseStandard(res, `List of Category ${result[0].name}`, 200, true, { data: result, pageInfo })
       } else {
-        return responseStandard(res, `There is no data on List of Category with id ${id}`, 400, false)
+        return responseStandard(res, `There is no data on List of Category with id ${id}`, 404, false)
       }
     } catch (err) {
       return responseStandard(res, 'Internal server error', 500, false, { error: err.message })

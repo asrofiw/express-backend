@@ -157,9 +157,9 @@ module.exports = {
   updateUserDetail: async (req, res) => {
     upload(req, res, async err => {
       if (err instanceof multer.MulterError) {
-        return response(res, err.message, {}, 400, false)
+        return response(res, err.message, 400, false)
       } else if (err) {
-        return response(res, err.message, {}, 400, false)
+        return response(res, err.message, 400, false)
       }
       try {
         const { id } = req.user
@@ -305,19 +305,21 @@ module.exports = {
         if (error) {
           return response(res, 'Error', 401, false, { error: error.message })
         } else {
-          let { isPrimary } = results
-          if (isPrimary === 'true') {
-            isPrimary = true
-          } else if (isPrimary === 'false') {
-            isPrimary = false
-          } else {
-            return response(res, 'isPrimary should be true or false', 400, false)
+          if (results.isPrimary) {
+            let { isPrimary } = results
+            if (isPrimary === 'true') {
+              isPrimary = true
+            } else if (isPrimary === 'false') {
+              isPrimary = false
+            } else {
+              return response(res, 'isPrimary should be true or false', 400, false)
+            }
+            results = {
+              ...results,
+              isPrimary: isPrimary
+            }
           }
 
-          results = {
-            ...results,
-            isPrimary: isPrimary
-          }
           const data = await updateUserAddressModel(id, results)
           if (data.affectedRows) {
             return response(res, 'Update data user\'s shipping address success')

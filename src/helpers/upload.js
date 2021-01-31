@@ -19,7 +19,7 @@ const fileFilter = (req, file, cb) => {
   if (mime.includes(file.mimetype)) {
     return cb(null, true)
   }
-  return cb(new Error('Only image files are allowes'), false)
+  return cb(new Error('Only image files are allowed'), false)
 }
 
 module.exports = multer({

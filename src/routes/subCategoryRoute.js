@@ -1,15 +1,15 @@
 const { Router } = require('express')
-const { createSubCategory, getAllSubCategory, updateSubCategory, deleteSubCategory, getDetailSubCategory } = require('../controllers/subCategoryController')
-const upload = require('../helpers/upload')
+const {
+  createSubCategory,
+  updateSubCategory,
+  deleteSubCategory
+} = require('../controllers/subCategoryController')
 
 const router = Router()
 
-router.post('/', upload.single('picture'), createSubCategory)
-router.put('/:id', updateSubCategory)
-router.delete('/:id', deleteSubCategory)
-
-// get category by all users
-router.get('/sub-category', getAllSubCategory)
-router.get('/sub-category/:id', getDetailSubCategory)
+// manage sub-category by seller
+router.post('/sub-category', createSubCategory)
+router.put('/sub-category/:id', updateSubCategory)
+router.delete('/sub-category/:id', deleteSubCategory)
 
 module.exports = router

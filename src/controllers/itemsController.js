@@ -1,44 +1,75 @@
-const { APP_URL } = process.env
-const qs = require('querystring')
-const responseStandard = require('../helpers/response')
+const response = require('../helpers/response')
+const joi = require('joi')
+const upload = require('../helpers/upload').array('pictures', 5)
+const multer = require('multer')
+const pagination = require('../helpers/pagination')
 const {
   createItemModel,
   getDetailItemModel,
-  getDetailItemIDModel,
-  updateItemModel,
   updatePartialItemModel,
   deleteItemModel,
   getItemModel,
   getItemCountModel,
   createImageModel,
-  getImagesModel
+  getImagesModel,
+  getDetailItemModelBySeller,
+  updateImagesItemModel
 } = require('../models/itemsModel')
 
 module.exports = {
-  createItem: async (req, res) => {
-    try {
-      // const { id } = req.user
-      const roleId = req.user.role_id
-      if (roleId === 2) {
-        const { name, price, description, categoryID, subCategoryID } = req.body
-        const imagesUpload = req.files
-        let path = imagesUpload.map(element => {
-          return element.path
-        })
-        path = path.map(element => {
-          return element.split('\\')
-        })
-        path.map(element => element.shift())
+  createItem: (req, res) => {
+    upload(req, res, async err => {
+      if (err instanceof multer.MulterError) {
+        return response(res, 'Error Multer', 400, false, { error: err.message })
+      } else if (err) {
+        return response(res, 'Error Multer', 400, false, { error: err.message })
+      }
 
-        if (name && price && description && categoryID && subCategoryID) {
-          const result = await createItemModel([name, price, description, categoryID, subCategoryID])
+      try {
+        const { id } = req.user
+        const roleId = req.user.role_id
+        if (roleId === 2) {
+          const schema = joi.object({
+            name: joi.string().required(),
+            price: joi.string().required(),
+            description: joi.string().required(),
+            categoryID: joi.string().required(),
+            subCategoryID: joi.string().required()
+          })
+
+          const { value, error } = schema.validate(req.body)
+
+          if (error) {
+            return response(res, 'Error Joi', 400, false, { error: error.message })
+          }
+
+          let path = ''
+          if (req.files.length > 0) {
+            const imagesUpload = req.files
+            console.log('imageuploads', imagesUpload)
+            path = imagesUpload.map(element => {
+              return element.path
+            })
+            path = path.map(element => {
+              return element.split('/')
+            })
+            path.map(element => element.shift())
+            console.log('path', path)
+          } else {
+            return response(res, 'Error', 400, false, { error: 'Input image is required' })
+          }
+
+          const { name, price, description, categoryID, subCategoryID } = value
+
+          const result = await createItemModel([name, price, description, categoryID, subCategoryID, id])
+          console.log(result)
           let data = {
             id: result.insertId,
             ...req.body
           }
           const idItem = data.id
           const urlImage = path.map(element => {
-            return `(${idItem}, '${process.env.APP_URL.concat(element.join('/'))}'), `
+            return `(${idItem}, '${element.join('/')}'), `
           })
           const images = await createImageModel(urlImage.join('').slice(0, -2))
           if (images.affectedRows) {
@@ -46,18 +77,118 @@ module.exports = {
               ...data,
               image: urlImage
             }
-            return responseStandard(res, 'Item has been created', 200, true, { data })
+            return response(res, 'Item has been created', 200, true, { data })
           } else {
-            return responseStandard(res, 'Failed to upload image', 400, false)
+            return response(res, 'Failed to upload image', 400, false)
           }
         } else {
-          return responseStandard(res, 'All field must be filled', 400, false)
+          return response(res, 'Forbidden access', 401, false)
+        }
+      } catch (err) {
+        return response(res, 'Internal server error', 500, false, { error: err.message })
+      }
+    })
+  },
+
+  updatePartialItem: async (req, res) => {
+    upload(req, res, async err => {
+      if (err instanceof multer.MulterError) {
+        return response(res, 'Error Multer', 400, false, { error: err.message })
+      } else if (err) {
+        return response(res, 'Error Multer', 400, false, { error: err.message })
+      }
+
+      try {
+        const { id } = req.user
+        const roleId = req.user.role_id
+        if (roleId === 2) {
+          const { idItem } = req.params
+          const schema = joi.object({
+            name: joi.string(),
+            price: joi.string(),
+            description: joi.string(),
+            category_id: joi.string(),
+            sub_category_id: joi.string(),
+            idImages: joi.array().items(joi.number()).single()
+          })
+
+          const { value, error } = schema.validate(req.body)
+          if (error) {
+            return response(res, 'Error Joi', 400, false, { error: error.message })
+          }
+
+          let path = ''
+          let updateImages = {}
+          let result = {}
+
+          if (req.files.length > 0 && value.idImages) {
+            const imagesUpload = req.files
+            path = imagesUpload.map(element => {
+              return `uploads/${element.filename}`
+            })
+            const data = []
+            path.map((element, index) => {
+              return data.push(`(${value.idImages[index]}, '${element}', ${idItem})`)
+            })
+            updateImages = await updateImagesItemModel(data.join(','))
+            if (!updateImages.affectedRows) {
+              return response(res, 'Failed to update image', 400, false)
+            }
+            delete value.idImages
+          } else {
+            path = undefined
+          }
+
+          if (Object.values(value).length > 0) {
+            const item = await getDetailItemModelBySeller([idItem, id])
+            if (item.length) {
+              const data = Object.entries(value).map(element => {
+                return parseInt(element[1]) > 0 ? `${element[0]} = ${element[1]}` : `${element[0]} = '${element[1]}'`
+              })
+              result = await updatePartialItemModel([data, idItem, id])
+
+              if (!result.affectedRows) {
+                return response(res, 'Failed to update data', 400, false)
+              }
+            } else {
+              return response(res, 'Item not found', 404, false)
+            }
+          }
+
+          if (result.affectedRows || updateImages.affectedRows) {
+            return response(res, `Item with id ${idItem} has been updated`)
+          }
+        } else {
+          return response(res, 'Forbidden access', 401, false)
+        }
+      } catch (err) {
+        return response(res, 'Internal Server Error', 500, false, { error: err.message })
+      }
+    })
+  },
+
+  deleteItem: async (req, res) => {
+    try {
+      const { id } = req.user
+      const roleId = req.user.role_id
+      if (roleId === 2) {
+        const { idItem } = req.params
+        const item = await getDetailItemModelBySeller([idItem, id])
+        if (item.length) {
+          const result = await deleteItemModel([idItem, id])
+          if (result.affectedRows) {
+            return response(res, `Data ID ${idItem} has been deleted`)
+          } else {
+            return response(res, 'Failed to delete data', 400, false)
+          }
+        } else {
+          return response(res, 'Data not found', 404, false)
         }
       } else {
-        return responseStandard(res, 'Forbidden access', 401, false)
+        return response(res, 'Forbidden access', 401, false)
       }
     } catch (err) {
-      return responseStandard(res, 'Internal server error', 500, false, { error: err.message })
+      return response(res, 'Internal Server Error', 500, false, { error: err.message })
     }
   },
 
@@ -87,87 +218,12 @@ module.exports = {
             url: null
           }
         }
-        return responseStandard(res, `Detail item ${data.name}`, 200, true, { data })
+        return response(res, `Detail item ${data.name}`, 200, true, { data })
       } else {
-        return responseStandard(res, `Data with id ${id} not found`, 404, false)
+        return response(res, `Data with id ${id} not found`, 404, false)
       }
     } catch (err) {
-      return responseStandard(res, 'Internal Server Error', 500, false)
-    }
-  },
-
-  updateItem: async (req, res) => {
-    try {
-      const { id } = req.params
-      const { name, price, description, categoryID, subCategoryID } = req.body
-      if (name.trim() && price.trim() && description.trim() && categoryID.trim() && subCategoryID.trim()) {
-        const items = await getDetailItemIDModel(id)
-        if (items.length) {
-          try {
-            const result = await updateItemModel([id, name, price, description, categoryID, subCategoryID])
-            if (result.affectedRows) {
-              return responseStandard(res, `Item with id ${id} has been updated`)
-            } else {
-              return responseStandard(res, 'Failed to update data', 400, false)
-            }
-          } catch (err) {
-            return responseStandard(res, 'Internal Server Error', 500, false)
-          }
-        } else {
-          return responseStandard(res, `ID ${id} not found`, 404, false)
-        }
-      } else {
-        return responseStandard(res, 'All data have to be updated', 400, false)
-      }
-    } catch (err) {
-      return responseStandard(res, 'Internal Server Error', 500, false)
-    }
-  },
-
-  updatePartialItem: async (req, res) => {
-    try {
-      const { id } = req.params
-      const { name = '', price = '', description = '', categoryID = '', subCategoryID = '' } = req.body
-      if (name.trim() || price.trim() || description.trim() || categoryID.trim() || subCategoryID.trim()) {
-        const item = await getDetailItemIDModel(id)
-        if (item.length) {
-          const data = Object.entries(req.body).map(element => {
-            return parseInt(element[1]) > 0 ? `${element[0]} = ${element[1]}` : `${element[0]} = '${element[1]}'`
-          })
-          const result = await updatePartialItemModel([id, data])
-
-          if (result.affectedRows) {
-            return responseStandard(res, `Item with id ${id} has been updated`)
-          } else {
-            return responseStandard(res, 'Failed to update data', 400, false)
-          }
-        } else {
-          return responseStandard(res, 'Item not found', 404, false)
-        }
-      } else {
-        return responseStandard(res, 'At least one column is filled', 400, false)
-      }
-    } catch (err) {
-      return responseStandard(res, 'Internal Server Error', 500, false)
-    }
-  },
-
-  deleteItem: async (req, res) => {
-    try {
-      const { id } = req.params
-      const item = await getDetailItemModel(id)
-      if (item.length) {
-        const result = await deleteItemModel(id)
-        if (result.affectedRows) {
-          return responseStandard(res, `Data ID ${id} has been deleted`)
-        } else {
-          return responseStandard(res, 'Failed to delete data', 400, false)
-        }
-      } else {
-        return responseStandard(res, 'Data not found', 400, false)
-      }
-    } catch (err) {
-      return responseStandard(res, 'Internal Server Error', 500, false)
+      return response(res, 'Internal Server Error', 500, false, { error: err.message })
     }
   },
 
@@ -185,21 +241,16 @@ module.exports = {
         searchValue = search || ''
       }
 
-      let sortingItem = {}
-      console.log(req.query)
-
       let sortKey = ''
       let sortValue = ''
 
       if (typeof sort === 'object') {
         sortKey = Object.keys(sort)[0]
         sortValue = Object.values(sort)[0]
-        sortingItem = `sort[${sortKey}]=${sortValue}`
       } else {
         sortKey = sort || 'id'
         sortValue = 'ASC'
       }
-      console.log(sortingItem)
 
       if (searchKey === 'category') {
         searchKey = 'categories.category_name'
@@ -232,37 +283,17 @@ module.exports = {
         url_image: element.url_image
       }))
 
-      const pageInfo = {
-        count: 0,
-        pages: 0,
-        currentPage: page,
-        limitPerPage: limit,
-        nextLink: null,
-        prevLink: null
-      }
-
       if (result.length) {
         const data = await getItemCountModel([searchKey, searchValue])
         const { count } = data[0]
-        pageInfo.count = count
-        pageInfo.pages = Math.ceil(count / limit)
+        const pageInfo = pagination(req, count, '', 'items', 'public')
 
-        const { pages, currentPage } = pageInfo
-
-        if (currentPage < pages) {
-          pageInfo.nextLink = `${APP_URL}public/items?${qs.stringify({ ...req.query, ...{ page: page + 1 } })}`
-        }
-
-        if (currentPage > 1) {
-          pageInfo.prevLink = `${APP_URL}public/items?${qs.stringify({ ...req.query, ...{ page: page - 1 } })}`
-        }
-
-        return responseStandard(res, 'List of Items', 200, true, { dataResult, pageInfo })
+        return response(res, 'List of Items', 200, true, { dataResult, pageInfo })
       } else {
-        return responseStandard(res, 'There is no Items on list', 400, false, { pageInfo })
+        return response(res, 'There is no Items on list', 400, false)
       }
     } catch (err) {
-      return responseStandard(res, 'Internal Server Error', 500, false)
+      return response(res, 'Internal Server Error', 500, false, { error: err.message })
     }
   }
 }
